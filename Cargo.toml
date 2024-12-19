@@ -1,0 +1,46 @@
+[workspace]
+members = [
+    "macros",
+    "websocket",
+    "client",
+    "general",
+    "rest-api",
+
+]
+
+
+[workspace.package]
+authors = ["range.moniter@gmail.com"]
+edition = "2021"
+
+
+[workspace.dependencies]
+hmac = "0.12.1"
+sha2 = {version = "0.10.8", default-features = false, features = ["oid"]}
+ed25519-dalek = {version = "2.1.1", features = ["serde", "zeroize", "rand_core", "digest", "pkcs8", "pem"]}
+log = "0.4.22"
+serde = { version = "1.0.215", features = ["derive"] }
+serde_json = "1.0.132"
+hyper = { version = "1.5.1", features = ["full"] }
+tokio = { version = "1.41.1", features = ["full"] }
+tokio-tungstenite = { version = "0.24.0", features = ["native-tls"] }
+tungstenite = { version = "0.24.0", features = ["native-tls"] }
+thiserror = "2.0.3"
+futures-util = "0.3.31"
+bigdecimal = { version = "0.4.6", features = ["serde_json", "serde"] }
+lazy_static = "1.5.0"
+env_logger = "0.11.5"
+tokio-stream = "0.1.16"
+async-trait = "0.1.83"
+bytes = "1.9.0"
+tower = { features = ["full", "tokio"], version = "0.5.1" }
+hyper-rustls = { version = "0.27.3", features = ["http2"] }
+hyper-util = { features = ["http2"], version = "0.1.10" }
+http-body-util = "0.1.2"
+proc-macro2 = "1.0.92"
+syn = { version = "2.0.90", features = ["full"] }
+quote = "1.0.37"
+base64 = "0.22.1"
+serde_urlencoded = "0.7.1"
+pin-project = "1.1.7"
+http-body = "1.0.1"

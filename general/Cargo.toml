@@ -1,0 +1,17 @@
+[package]
+name = "general"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+macros = {path = "../macros"}
+log.workspace = true
+thiserror.workspace = true
+hyper.workspace = true
+ed25519-dalek = {workspace = true, features = ["pkcs8"]}
+hyper-util = {workspace = true, features = ["client-legacy"]}
+tokio-tungstenite.workspace = true
+serde_urlencoded.workspace = true

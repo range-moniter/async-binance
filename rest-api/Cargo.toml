@@ -1,0 +1,16 @@
+[package]
+name = "rest-api"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde.workspace = true
+bigdecimal.workspace = true
+general = {path = "../general"}
+client = {path = "../client" , features = ["default"]}
+
+
+[dev-dependencies]
+tokio.workspace = true
+lazy_static.workspace = true

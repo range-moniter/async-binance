@@ -1,0 +1,36 @@
+[package]
+name = "client"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+
+
+[features]
+default = ["sign_with_hmac"]
+sign_with_hmac = ["hmac/std", "sha2/default"]
+sign_with_ed25519 = ["ed25519-dalek"]
+
+[dependencies]
+hmac = {workspace = true, optional = true, features = ["std"]}
+sha2 = {workspace = true, optional = true, features = ["oid"]}
+ed25519-dalek = {workspace = true, optional = true}
+tower.workspace = true
+tokio.workspace = true
+hyper = {workspace = true, features = ["full"]}
+lazy_static.workspace = true
+tokio-tungstenite.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+futures-util.workspace = true
+async-trait.workspace = true
+general = {path = "../general"}
+log.workspace = true
+tungstenite.workspace = true
+base64.workspace = true
+serde_urlencoded.workspace = true
+http-body-util.workspace = true
+bytes.workspace = true
+hyper-util.workspace = true
+hyper-rustls.workspace = true
+pin-project.workspace = true
+http-body.workspace = true

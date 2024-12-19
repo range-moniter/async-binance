@@ -1,0 +1,87 @@
+use std::pin::Pin;
+use futures_util::Stream;
+use crate::market::types::depth::{DepthStream, DepthStreamPayload};
+use client::stream::client::WebsocketClient;
+use client::stream::payload::SocketPayloadActor;
+use client::stream::stream::SocketPayloadProcess;
+use general::result::BinanceResult;
+use general::symbol::Symbol;
+
+pub type DepthResponseStream = Pin<Box<dyn Stream<Item=BinanceResult<SocketPayloadActor<DepthStreamPayload>>> + Send>>;
+
+pub struct DepthClient {
+    websocket_client: WebsocketClient<DepthStream>,
+}
+
+
+impl DepthClient {
+    pub fn new(websocket_client: WebsocketClient<DepthStream>) -> Self {
+        Self { websocket_client }
+    }
+
+    pub async fn subscribe(&mut self, symbol: Symbol) {
+        self.websocket_client.subscribe_single(DepthStream::new(symbol)).await.unwrap();
+    }
+
+
+    pub async fn subscribe_multi(&mut self, params: Vec<Symbol>) {
+        let params = params.into_iter()
+            .map(|symbol| DepthStream::new(symbol))
+            .collect::<Vec<_>>();
+        self.websocket_client.subscribe_multiple(params).await.unwrap()
+    }
+
+    pub async fn unsubscribe(&mut self, symbol: Symbol) {
+        self.websocket_client.unsubscribe_single(DepthStream::new(symbol)).await.unwrap();
+    }
+
+    pub async fn unsubscribe_multi(&mut self, symbols: Vec<Symbol>) {
+        let params = symbols.into_iter()
+            .map(|symbol| DepthStream::new(symbol))
+            .collect::<Vec<DepthStream>>();
+        self.websocket_client.unsubscribe_multiple(params).await.unwrap();
+    }
+
+    pub async fn close(self) {
+        self.websocket_client.close().await;
+    }
+}
+
+pub(crate) async fn depth_payload_process<P>(trade_response_stream: DepthResponseStream,
+                                             mut processor: P)
+where
+    P: SocketPayloadProcess<DepthStreamPayload> + Send + 'static,
+{
+    processor.process(trade_response_stream).await;
+}
+
+#[cfg(test)]
+mod tests {
+    use std::time::Duration;
+    use tokio::time::sleep;
+    use env_logger::Builder;
+    use crate::market_socket_ct::BinanceMarketWebsocketClient;
+    use super::*;
+    #[tokio::test]
+    async fn test_average_price() {
+        Builder::from_default_env()
+            .filter(None, log::LevelFilter::Debug)
+            .init();
+
+        let mut book_depth_client = BinanceMarketWebsocketClient::depth().await;
+
+        book_depth_client.subscribe(Symbol::new("ARKUSDT")).await;
+
+        sleep(Duration::from_secs(15)).await;
+
+        book_depth_client.subscribe(Symbol::new("FILUSDT")).await;
+
+        sleep(Duration::from_secs(20)).await;
+
+        println!("send close message");
+
+        book_depth_client.close().await;
+
+        sleep(Duration::from_secs(200)).await;
+    }
+}

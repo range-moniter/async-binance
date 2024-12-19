@@ -1,0 +1,17 @@
+[package]
+name = "core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+log.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+futures-util.workspace = true
+bigdecimal.workspace = true
+lazy_static.workspace = true
+env_logger.workspace = true
+tokio-stream.workspace = true
+general = {path = "../general"}
+client = {path = "../client" , features = ["default"]}
