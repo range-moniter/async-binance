@@ -9,6 +9,8 @@ serde.workspace = true
 bigdecimal.workspace = true
 general = {path = "../general"}
 client = {path = "../client" , features = ["default"]}
+log.workspace = true
+env_logger.workspace = true
 
 
 [dev-dependencies]

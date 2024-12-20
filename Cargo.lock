@@ -1268,8 +1268,10 @@ version = "0.1.0"
 dependencies = [
  "bigdecimal",
  "client",
+ "env_logger",
  "general",
  "lazy_static",
+ "log",
  "serde",
  "tokio",
 ]

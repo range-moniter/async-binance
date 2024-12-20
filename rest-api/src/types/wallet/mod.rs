@@ -3,5 +3,5 @@
 
 
 pub mod coins;
-mod withdraw;
-mod deposit;
+pub mod withdraw;
+pub mod deposit;

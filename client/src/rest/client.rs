@@ -176,6 +176,7 @@ pub trait BinanceClientAction
                 }
             }
         }
+        log::debug!("response body: {:?}", String::from_utf8_lossy(&body));
         if resp.status().is_success() {
             Ok(serde_json::from_slice::<O>(&body)?)
         } else {
