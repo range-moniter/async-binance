@@ -1,5 +1,7 @@
 mod future;
 pub(crate) mod layer;
+mod types;
+
 use crate::rest::body::RequestBody;
 use crate::rest::extension::RequestExtension;
 use crate::rest::layer::rate::future::RateFuture;
