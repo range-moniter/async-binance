@@ -33,7 +33,7 @@ where
                 req,
                 "/sapi/v1/capital/config/getall",
                 self.domain.as_str(),
-                RequestExtension::auth(AuthType::UserData, 10, certificate),
+                RequestExtension::auth_sapi(AuthType::UserData, 10, certificate),
             )
             .await
     }
@@ -43,13 +43,14 @@ where
         &self,
         req: CreateWithdrawReq,
         certificate: Certificate,
+        uid: u64,
     ) -> BinanceResult<CreateWithdrawResp> {
         self.client
             .post(
                 req,
                 "/sapi/v1/capital/withdraw/apply",
                 self.domain.as_str(),
-                RequestExtension::auth(AuthType::UserData, 600, certificate),
+                RequestExtension::auth_uid_sapi(AuthType::UserData, 600, certificate, uid),
             )
             .await
     }
@@ -65,7 +66,7 @@ where
                 req,
                 "/sapi/v1/capital/withdraw/history",
                 self.domain.as_str(),
-                RequestExtension::auth(AuthType::UserData, 1800, certificate),
+                RequestExtension::auth_sapi(AuthType::UserData, 18000, certificate),
             )
             .await
     }

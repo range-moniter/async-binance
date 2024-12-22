@@ -34,3 +34,4 @@ hyper-util.workspace = true
 hyper-rustls.workspace = true
 pin-project.workspace = true
 http-body.workspace = true
+dashmap.workspace = true

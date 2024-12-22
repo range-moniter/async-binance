@@ -1,79 +1,33 @@
 mod future;
 pub(crate) mod layer;
-mod types;
+pub mod types;
 
 use crate::rest::body::RequestBody;
 use crate::rest::extension::RequestExtension;
 use crate::rest::layer::rate::future::RateFuture;
 use hyper::Request;
-use std::sync::{Arc, Mutex};
 use std::task::{Context, Poll};
-use std::time::SystemTime;
 use tower::{BoxError, Service};
+use crate::rest::layer::rate::types::ip_handle::IpWeightHandle;
+use crate::rest::layer::rate::types::order_handle::OrderHandle;
+use crate::rest::layer::rate::types::uid_handle::UidWeightHandle;
 
-#[derive(Debug, Clone)]
-pub struct WeightWindow {
-    weight_window: Arc<Mutex<(u16, u64)>>,
-    basic_weight: u16,
-    window_size: u64,
-}
-
-impl WeightWindow {
-    pub fn new(weight: u16, window_edge: u64, window_size: u64) -> Self {
-        WeightWindow {
-            weight_window: Arc::new(Mutex::new((weight, window_edge))),
-            basic_weight: weight,
-            window_size,
-        }
-    }
-
-    pub fn check_weight(&mut self, weight: u16) -> bool {
-        let mut guard = self.weight_window.lock().unwrap();
-        let (pool_weight, window_edge) = guard.clone();
-        let current = current_minutes();
-        if current > window_edge {
-            *guard = (
-                self.basic_weight - weight,
-                calculate_window_edge(self.window_size),
-            );
-            true
-        } else {
-            if pool_weight >= weight {
-                *guard = (pool_weight - weight, window_edge);
-                true
-            } else {
-                false
-            }
-        }
-    }
-}
-
-fn current_minutes() -> u64 {
-    SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_secs()
-        / 60
-}
-
-pub(crate) fn calculate_window_edge(window_range: u64) -> u64 {
-    current_minutes() + window_range
-}
 #[derive(Clone, Debug)]
 pub struct WeightRateLimiter<S> {
     inner: S,
-    weight_window: WeightWindow,
+    ip_weight_rate_handle: IpWeightHandle,
+    uid_weight_handle: UidWeightHandle,
+    order_handle: OrderHandle,
 }
 
-impl<S> WeightRateLimiter<S> {
-    pub(crate) fn new(inner: S, window_size: u64, weight: u16) -> Self {
+impl<S> WeightRateLimiter<S>
+{
+    pub(crate) fn new_with_default(inner: S) -> Self {
         WeightRateLimiter {
             inner,
-            weight_window: WeightWindow::new(
-                weight,
-                calculate_window_edge(window_size),
-                window_size,
-            ),
+            ip_weight_rate_handle: IpWeightHandle::new_default(),
+            uid_weight_handle: UidWeightHandle::new_with_default(),
+            order_handle: OrderHandle::new_with_default(),
         }
     }
 }
@@ -81,7 +35,7 @@ impl<S> WeightRateLimiter<S> {
 impl<S> Service<Request<RequestBody>> for WeightRateLimiter<S>
 where
     S: Service<Request<RequestBody>>,
-    S::Error: Into<BoxError>
+    S::Error: Into<BoxError>,
 {
     type Response = S::Response;
     type Error = BoxError;
@@ -91,16 +45,22 @@ where
     }
 
     fn call(&mut self, req: Request<RequestBody>) -> Self::Future {
-        let weight = RequestExtension::explain_request_weight(req.extensions());
-        let condition = if let Some(weight) = weight {
-            if self.weight_window.check_weight(weight) {
+        let weight = RequestExtension::explain_request_weight(req.extensions()).unwrap();
+        let ip_rate = RequestExtension::explain_request_ip_rate(req.extensions());
+        let uid_rate = RequestExtension::explain_request_uid_rate(req.extensions());
+        let order_rate = RequestExtension::explain_request_order_rate(req.extensions());
+        let condition = {
+            let uid_check = self.uid_weight_handle.available(weight, uid_rate);
+            let order_check = self.order_handle.available(order_rate);
+            let ip_check = self.ip_weight_rate_handle.available(weight, ip_rate);
+            if uid_check && order_check && ip_check {
                 true
             } else {
                 false
             }
-        } else {
-            true
         };
+
         RateFuture::new(self.inner.call(req), condition)
     }
 }
+

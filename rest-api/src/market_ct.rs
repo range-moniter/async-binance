@@ -35,7 +35,7 @@ where
                 request,
                 "/api/v3/exchangeInfo",
                 self.domain.as_str(),
-                RequestExtension::none_auth(20),
+                RequestExtension::none_auth_api(20),
             )
             .await
     }
@@ -55,7 +55,7 @@ where
                 request,
                 "/api/v3/depth",
                 self.domain.as_str(),
-                RequestExtension::none_auth(weight),
+                RequestExtension::none_auth_api(weight),
             )
             .await
     }
@@ -69,7 +69,7 @@ where
                 request,
                 "/api/v3/trades",
                 self.domain.as_str(),
-                RequestExtension::none_auth(25),
+                RequestExtension::none_auth_api(25),
             )
             .await
     }
@@ -83,7 +83,7 @@ where
                 request,
                 "/api/v3/historicalTrades",
                 self.domain.as_str(),
-                RequestExtension::none_auth(25),
+                RequestExtension::none_auth_api(25),
             )
             .await
     }
@@ -97,7 +97,7 @@ where
                 request,
                 "/api/v3/aggTrades",
                 self.domain.as_str(),
-                RequestExtension::none_auth(2),
+                RequestExtension::none_auth_api(2),
             )
             .await
     }
@@ -109,7 +109,7 @@ where
                 request,
                 "/api/v3/klines",
                 self.domain.as_str(),
-                RequestExtension::none_auth(2),
+                RequestExtension::none_auth_api(2),
             )
             .await;
         items.map(|items| items.into_iter().map(Into::into).collect())
@@ -122,7 +122,7 @@ where
                 request,
                 "/api/v3/uiKlines",
                 self.domain.as_str(),
-                RequestExtension::none_auth(2),
+                RequestExtension::none_auth_api(2),
             )
             .await;
         items.map(|items| items.into_iter().map(Into::into).collect())
@@ -134,7 +134,7 @@ where
                 request,
                 "/api/v3/avgPrice",
                 self.domain.as_str(),
-                RequestExtension::none_auth(2),
+                RequestExtension::none_auth_api(2),
             )
             .await
     }
@@ -151,7 +151,7 @@ where
                 request,
                 "/api/v3/ticker/24hr",
                 self.domain.as_str(),
-                RequestExtension::none_auth(2),
+                RequestExtension::none_auth_api(2),
             )
             .await
     }
@@ -176,7 +176,7 @@ where
                 request,
                 "/api/v3/ticker/24hr",
                 self.domain.as_str(),
-                RequestExtension::none_auth(weight),
+                RequestExtension::none_auth_api(weight),
             )
             .await
     }
@@ -193,7 +193,7 @@ where
                 request,
                 "/api/v3/ticker/tradingDay",
                 self.domain.as_str(),
-                RequestExtension::none_auth(4),
+                RequestExtension::none_auth_api(4),
             )
             .await
     }
@@ -215,7 +215,7 @@ where
                 request,
                 "/api/v3/ticker/tradingDay",
                 self.domain.as_str(),
-                RequestExtension::none_auth(weight as u16),
+                RequestExtension::none_auth_api(weight as u32),
             )
             .await
     }
@@ -232,7 +232,7 @@ where
                 request,
                 "/api/v3/ticker/price",
                 self.domain.as_str(),
-                RequestExtension::none_auth(2),
+                RequestExtension::none_auth_api(2),
             )
             .await
     }
@@ -249,7 +249,7 @@ where
                 request,
                 "/api/v3/ticker/price",
                 self.domain.as_str(),
-                RequestExtension::none_auth(4),
+                RequestExtension::none_auth_api(4),
             )
             .await
     }
@@ -266,7 +266,7 @@ where
                 request,
                 "/api/v3/ticker/bookTicker",
                 self.domain.as_str(),
-                RequestExtension::none_auth(2),
+                RequestExtension::none_auth_api(2),
             )
             .await
     }
@@ -283,7 +283,7 @@ where
                 request,
                 "/api/v3/ticker/bookTicker",
                 self.domain.as_str(),
-                RequestExtension::none_auth(4),
+                RequestExtension::none_auth_api(4),
             )
             .await
     }
@@ -300,7 +300,7 @@ where
                 request,
                 "/api/v3/ticker",
                 self.domain.as_str(),
-                RequestExtension::none_auth(4),
+                RequestExtension::none_auth_api(4),
             )
             .await
     }
@@ -322,7 +322,7 @@ where
                 request,
                 "/api/v3/ticker",
                 self.domain.as_str(),
-                RequestExtension::none_auth(weight as u16),
+                RequestExtension::none_auth_api(weight as u32),
             )
             .await
     }

@@ -34,13 +34,14 @@ where
         &self,
         req: CreateOrderReq,
         certificate: Certificate,
+        uid: u64
     ) -> BinanceResult<CreateOrderResp> {
         self.client
             .post(
                 req,
                 "/api/v3/order",
                 self.domain.as_str(),
-                RequestExtension::auth(AuthType::UserData, 1, certificate),
+                RequestExtension::auth_order_api(AuthType::UserData, 1, certificate, uid),
             )
             .await
     }
@@ -54,7 +55,7 @@ where
                 req,
                 "/api/v3/order",
                 self.domain.as_str(),
-                RequestExtension::auth(AuthType::UserData, 4, certificate),
+                RequestExtension::auth_api(AuthType::UserData, 4, certificate),
             )
             .await
     }
@@ -69,7 +70,7 @@ where
                 req,
                 "/api/v3/allOrders",
                 self.domain.as_str(),
-                RequestExtension::auth(AuthType::UserData, 20, certificate),
+                RequestExtension::auth_api(AuthType::UserData, 20, certificate),
             )
             .await
     }
@@ -78,13 +79,14 @@ where
         &self,
         req: CancelOrderReq,
         certificate: Certificate,
+        uid: u64
     ) -> BinanceResult<CancelOrderResp> {
         self.client
             .delete(
                 req,
                 "/api/v3/order",
                 self.domain.as_str(),
-                RequestExtension::auth(AuthType::UserData, 1, certificate),
+                RequestExtension::auth_order_api(AuthType::UserData, 1, certificate, uid),
             )
             .await
     }
@@ -93,13 +95,14 @@ where
         &self,
         req: CancelSingleTypeOrderReq,
         certificate: Certificate,
+        uid: u64
     ) -> BinanceResult<Vec<CancelOrderResp>> {
         self.client
             .delete(
                 req,
                 "/api/v3/openOrders",
                 self.domain.as_str(),
-                RequestExtension::auth(AuthType::UserData, 1, certificate),
+                RequestExtension::auth_order_api(AuthType::UserData, 1, certificate, uid),
             )
             .await
     }
@@ -108,13 +111,14 @@ where
         &self,
         req: CreateOcoOrderReq,
         certificate: Certificate,
+        uid: u64
     ) -> BinanceResult<CreateOcoOrderResp> {
         self.client
             .post(
                 req,
                 "/api/v3/orderList/oco",
                 self.domain.as_str(),
-                RequestExtension::auth(AuthType::Trade, 1, certificate),
+                RequestExtension::auth_order_api(AuthType::Trade, 1, certificate, uid),
             )
             .await
     }
@@ -123,13 +127,14 @@ where
         &self,
         req: CreateOtoOrderReq,
         certificate: Certificate,
+        uid: u64
     ) -> BinanceResult<CreateOtoOrderResp> {
         self.client
             .post(
                 req,
                 "/api/v3/orderList/oto",
                 self.domain.as_str(),
-                RequestExtension::auth(AuthType::Trade, 1, certificate),
+                RequestExtension::auth_order_api(AuthType::Trade, 1, certificate, uid),
             )
             .await
     }
@@ -138,13 +143,14 @@ where
         &self,
         req: CreateOtoCoOrderReq,
         certificate: Certificate,
+        uid: u64
     ) -> BinanceResult<CreateOtoCoOrderResp> {
         self.client
             .post(
                 req,
                 "/api/v3/orderList/otoco",
                 self.domain.as_str(),
-                RequestExtension::auth(AuthType::Trade, 1, certificate),
+                RequestExtension::auth_order_api(AuthType::Trade, 1, certificate, uid),
             )
             .await
     }
@@ -153,13 +159,14 @@ where
         &self,
         req: CancelOrderListReq,
         certificate: Certificate,
+        uid: u64
     ) -> BinanceResult<CancelOrderListResp> {
         self.client
             .delete(
                 req,
                 "/api/v3/orderList",
                 self.domain.as_str(),
-                RequestExtension::auth(AuthType::Trade, 1, certificate),
+                RequestExtension::auth_order_api(AuthType::Trade, 1, certificate, uid),
             )
             .await
     }
@@ -174,7 +181,7 @@ where
                 req,
                 "/api/v3/orderList",
                 self.domain.as_str(),
-                RequestExtension::auth(AuthType::UserData, 4, certificate),
+                RequestExtension::auth_api(AuthType::UserData, 4, certificate),
             )
             .await
     }
@@ -189,7 +196,7 @@ where
                 req,
                 "/api/v3/allOrderList",
                 self.domain.as_str(),
-                RequestExtension::auth(AuthType::UserData, 20, certificate),
+                RequestExtension::auth_api(AuthType::UserData, 20, certificate),
             )
             .await
     }
@@ -204,7 +211,7 @@ where
                 req,
                 "/api/v3/openOrderList",
                 self.domain.as_str(),
-                RequestExtension::auth(AuthType::UserData, 6, certificate),
+                RequestExtension::auth_api(AuthType::UserData, 6, certificate),
             )
             .await
     }
@@ -238,7 +245,7 @@ mod tests {
             .build();
         match req {
             Ok(req) => {
-                let resp = CLIENT.create_order(req, CERTIFICATE.clone()).await;
+                let resp = CLIENT.create_order(req, CERTIFICATE.clone(), 0).await;
                 println!("{:?}", resp)
             }
             Err(err) => {
@@ -256,7 +263,7 @@ mod tests {
     #[tokio::test]
     async fn test_cancel_order() {
         let req = CancelOrderReq::new_with_order_id("DOGEUSDT", 7483831693);
-        let resp = CLIENT.cancel_order(req, CERTIFICATE.clone()).await;
+        let resp = CLIENT.cancel_order(req, CERTIFICATE.clone(), 0).await;
         println!("{:?}", resp);
     }
 
