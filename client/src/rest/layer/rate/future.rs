@@ -18,8 +18,6 @@ impl<S> RateFuture<S> {
     }
 }
 
-
-
 impl<S, R, E> Future for RateFuture<S>
 where
     S: Future<Output = Result<R, E>>,

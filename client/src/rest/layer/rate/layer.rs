@@ -12,10 +12,10 @@ impl WeightRateLimitLayer {
     }
 }
 
-impl<I> Layer<I> for WeightRateLimitLayer {
+impl<I> Layer<I> for WeightRateLimitLayer  {
     type Service = WeightRateLimiter<I>;
 
     fn layer(&self, inner: I) -> Self::Service {
-        WeightRateLimiter::new(inner, self.time_window, self.limit)
+        WeightRateLimiter::new_with_default(inner)
     }
 }

@@ -27,7 +27,7 @@ where
                 EmptyRequestData::default(),
                 "/api/v3/userDataStream",
                 self.domain.as_str(),
-                RequestExtension::auth(AuthType::UserStream, 1, certificate),
+                RequestExtension::auth_api(AuthType::UserStream, 1, certificate),
             )
             .await
     }
@@ -42,7 +42,7 @@ where
                 listen_key,
                 "/api/v3/userDataStream",
                 self.domain.as_str(),
-                RequestExtension::auth(AuthType::UserStream, 1, certificate),
+                RequestExtension::auth_api(AuthType::UserStream, 1, certificate),
             )
             .await
     }
@@ -57,7 +57,7 @@ where
                 listen_key,
                 "/api/v3/userDataStream",
                 self.domain.as_str(),
-                RequestExtension::auth(AuthType::UserStream, 1, certificate),
+                RequestExtension::auth_api(AuthType::UserStream, 1, certificate),
             )
             .await
     }
