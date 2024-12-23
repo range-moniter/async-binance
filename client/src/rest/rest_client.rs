@@ -33,7 +33,7 @@ impl BinanceClient for BinanceRestClient {
             .build(connector);
         ServiceBuilder::new()
             .layer(TimeoutLayer::new(config.request_timeout()))
-            .layer(WeightRateLimitLayer::new(config.weight_window_config().window_size(), config.weight_window_config().window_weight()))
+            .layer(WeightRateLimitLayer::new())
             .layer(AuthorizationLayer::default())
             .service(client)
     }

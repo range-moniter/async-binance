@@ -60,13 +60,12 @@ where
                 }
                 AuthType::Trade | AuthType::UserData => {
                     let cert = get_certificate(certificate.clone());
-                    let window_size = get_window_size(weight);
                     req.headers_mut().append(
                         "X-MBX-APIKEY",
                         HeaderValue::from_str(cert.api_key()).unwrap(),
                     );
-                    let time_and_window_size = get_time_and_window_params(window_size);
                     let new_body = if let Some(body) = request_body {
+                        let time_and_window_size = get_time_and_window_params(&body, get_window_size(weight));
                         let payload = format!("{}&{}", body, &time_and_window_size);
                         let sign = sign(payload, cert.secret_key())
                             .unwrap_or_else(|err| panic!("sign error: {:?}", err));
@@ -82,6 +81,7 @@ where
                         None
                     };
                     let new_params = if let Some(param) = request_param {
+                        let time_and_window_size = get_time_and_window_params(&param, get_window_size(weight));
                         let payload = format!("{}&{}", param, &time_and_window_size);
                         let sign = sign(payload, cert.secret_key())
                             .unwrap_or_else(|err| panic!("sign error: {:?}", err));
@@ -95,6 +95,8 @@ where
                     } else {
                         None
                     };
+                    log::debug!("request_param: {:?}", new_params);
+                    log::debug!("request_body: {:?}", new_body);
                     let request = rebuild_request(req, new_params, new_body);
                     self.inner.call(request)
                 }
@@ -107,13 +109,16 @@ where
     }
 }
 
-fn get_time_and_window_params(window_size: u16) -> String {
+fn get_time_and_window_params(body: &String, window_size: u16) -> String {
     let current_time = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .unwrap()
         .as_millis();
-    let append = format!("timestamp={}&recvWindow={}", current_time, window_size);
-    append
+    if body.contains("recvWindow") {
+        format!("timestamp={}", current_time)
+    } else {
+        format!("timestamp={}&recvWindow={}", current_time, window_size)
+    }
 }
 fn get_window_size(window_size: Option<u16>) -> u16 {
     match window_size {

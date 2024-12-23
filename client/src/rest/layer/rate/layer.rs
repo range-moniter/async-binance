@@ -1,14 +1,12 @@
 use crate::rest::layer::rate::WeightRateLimiter;
 use tower::Layer;
 
-pub struct WeightRateLimitLayer {
-    time_window: u64,
-    limit: u16,
-}
+#[derive(Debug, Default)]
+pub struct WeightRateLimitLayer;
 
 impl WeightRateLimitLayer {
-    pub const fn new(time_window: u64, limit: u16) -> Self {
-        WeightRateLimitLayer { time_window, limit }
+    pub fn new() -> Self {
+        Default::default()
     }
 }
 
