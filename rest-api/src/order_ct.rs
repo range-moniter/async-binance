@@ -228,7 +228,7 @@ where
             "/api/v3/sor/order",
             self.domain.as_str(),
             RequestExtension::auth_order_api(AuthType::Trade, 1, certificate, uid),
-        )
+        ).await
     }
 }
 

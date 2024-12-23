@@ -38,7 +38,9 @@ pub struct CreateSorOrderReqBuilder {
 
 impl CreateSorOrderReqBuilder {
     pub fn new_builder() -> Self {
-        Default::default()
+        CreateSorOrderReqBuilder {
+            req: CreateSorOrderReq::default(),
+        }
     }
 
     pub fn symbol(mut self, symbol: &str) -> Self {
