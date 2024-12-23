@@ -14,7 +14,7 @@ pub fn generate_permission(input: TokenStream) -> TokenStream {
         })
         .collect();
 
-    let gen = quote! {
+    let r#gen = quote! {
 
         use serde::{Deserialize, Serialize};
 
@@ -27,5 +27,5 @@ pub fn generate_permission(input: TokenStream) -> TokenStream {
         }
     };
 
-    gen.into()
+    r#gen.into()
 }

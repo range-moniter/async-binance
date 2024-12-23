@@ -255,7 +255,7 @@ dependencies = [
 
 [[package]]
 name = "client"
-version = "0.1.0"
+version = "0.0.1-alpha.1"
 dependencies = [
  "async-trait",
  "base64",
@@ -306,7 +306,7 @@ checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 
 [[package]]
 name = "core"
-version = "0.1.0"
+version = "0.0.1-alpha.1"
 dependencies = [
  "bigdecimal",
  "client",
@@ -623,7 +623,7 @@ dependencies = [
 
 [[package]]
 name = "general"
-version = "0.1.0"
+version = "0.0.1-alpha.1"
 dependencies = [
  "ed25519-dalek",
  "hyper",
@@ -938,7 +938,7 @@ checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 
 [[package]]
 name = "macros"
-version = "0.1.0"
+version = "0.0.1-alpha.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1291,7 +1291,7 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
 name = "rest-api"
-version = "0.1.0"
+version = "0.0.1-alpha.1"
 dependencies = [
  "bigdecimal",
  "client",
