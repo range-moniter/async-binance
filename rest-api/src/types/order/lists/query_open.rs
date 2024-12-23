@@ -7,6 +7,17 @@ pub struct QueryOpenOrderReq {
     recv_window: Option<u16>,
 }
 
+impl QueryOpenOrderReq {
+    pub fn new() -> Self {
+        QueryOpenOrderReq { recv_window: None }
+    }
+
+    pub fn new_with_recv_window(recv_window: u16) -> Self {
+        QueryOpenOrderReq { recv_window: Some(recv_window) }
+    }
+}
+
+
 #[derive(Debug, Deserialize)]
 pub struct QueryOpenOrderResp {
     #[serde(rename = "orderListId")]

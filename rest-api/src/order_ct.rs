@@ -9,6 +9,7 @@ use crate::types::order::lists::oto_create::{CreateOtoOrderReq, CreateOtoOrderRe
 use crate::types::order::lists::otoco_create::{CreateOtoCoOrderReq, CreateOtoCoOrderResp};
 use crate::types::order::lists::query::{QueryOrderListReq, QueryOrderListResp};
 use crate::types::order::lists::query_open::{QueryOpenOrderReq, QueryOpenOrderResp};
+use crate::types::order::sor::create::{CreateSorOrderReq, CreateSorOrderResp};
 use client::rest::client::{BinanceClient, BinanceClientAction};
 use client::rest::extension::RequestExtension;
 use client::rest::layer::authorization::types::{AuthType, Certificate};
@@ -34,7 +35,7 @@ where
         &self,
         req: CreateOrderReq,
         certificate: Certificate,
-        uid: u64
+        uid: u64,
     ) -> BinanceResult<CreateOrderResp> {
         self.client
             .post(
@@ -79,7 +80,7 @@ where
         &self,
         req: CancelOrderReq,
         certificate: Certificate,
-        uid: u64
+        uid: u64,
     ) -> BinanceResult<CancelOrderResp> {
         self.client
             .delete(
@@ -95,7 +96,7 @@ where
         &self,
         req: CancelSingleTypeOrderReq,
         certificate: Certificate,
-        uid: u64
+        uid: u64,
     ) -> BinanceResult<Vec<CancelOrderResp>> {
         self.client
             .delete(
@@ -111,7 +112,7 @@ where
         &self,
         req: CreateOcoOrderReq,
         certificate: Certificate,
-        uid: u64
+        uid: u64,
     ) -> BinanceResult<CreateOcoOrderResp> {
         self.client
             .post(
@@ -127,7 +128,7 @@ where
         &self,
         req: CreateOtoOrderReq,
         certificate: Certificate,
-        uid: u64
+        uid: u64,
     ) -> BinanceResult<CreateOtoOrderResp> {
         self.client
             .post(
@@ -143,7 +144,7 @@ where
         &self,
         req: CreateOtoCoOrderReq,
         certificate: Certificate,
-        uid: u64
+        uid: u64,
     ) -> BinanceResult<CreateOtoCoOrderResp> {
         self.client
             .post(
@@ -159,7 +160,7 @@ where
         &self,
         req: CancelOrderListReq,
         certificate: Certificate,
-        uid: u64
+        uid: u64,
     ) -> BinanceResult<CancelOrderListResp> {
         self.client
             .delete(
@@ -215,6 +216,20 @@ where
             )
             .await
     }
+
+    async fn create_new_sor_order(
+        &self,
+        req: CreateSorOrderReq,
+        certificate: Certificate,
+        uid: u64,
+    ) -> BinanceResult<CreateSorOrderResp> {
+        self.client.post(
+            req,
+            "/api/v3/sor/order",
+            self.domain.as_str(),
+            RequestExtension::auth_order_api(AuthType::Trade, 1, certificate, uid),
+        )
+    }
 }
 
 #[cfg(test)]
@@ -231,7 +246,10 @@ mod tests {
     lazy_static! {
         static ref CLIENT: OrderClient<BinanceRestClient> =
             OrderClient::new(BinanceRestClient::build_client(Config::new_default()));
-        static ref CERTIFICATE: Certificate = Certificate::new("", "");
+        static ref CERTIFICATE: Certificate = Certificate::new(
+            "rmooMuqIeGnNzv6MFwZZgIZsAkxa4Aykdb0eZAj0qNZ8EEhapAoczIoGPrTXxNte",
+            "F4LZhhANd5C4DOMh060r6ERwHflbaOezxjjVqfJfZraifExCOnBMra0jwOROpEA0"
+        );
     }
     #[tokio::test]
     async fn test_create_order() {
@@ -271,6 +289,13 @@ mod tests {
     async fn test_get_all_orders() {
         let req = QueryAllOrderReq::new("DOGEUSDT");
         let resp = CLIENT.get_all_orders(req, CERTIFICATE.clone()).await;
+        println!("{:?}", resp);
+    }
+
+    #[tokio::test]
+    async fn test_get_open_orders() {
+        let req = QueryOpenOrderReq::new();
+        let resp = CLIENT.get_open_order_list(req, CERTIFICATE.clone()).await;
         println!("{:?}", resp);
     }
 }
