@@ -255,7 +255,7 @@ dependencies = [
 
 [[package]]
 name = "client"
-version = "0.1.0"
+version = "0.0.1-alpha.1"
 dependencies = [
  "async-trait",
  "base64",
@@ -303,23 +303,6 @@ name = "const-oid"
 version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
-
-[[package]]
-name = "core"
-version = "0.1.0"
-dependencies = [
- "bigdecimal",
- "client",
- "env_logger",
- "futures-util",
- "general",
- "lazy_static",
- "log",
- "serde",
- "serde_json",
- "tokio",
- "tokio-stream",
-]
 
 [[package]]
 name = "core-foundation"
@@ -623,7 +606,7 @@ dependencies = [
 
 [[package]]
 name = "general"
-version = "0.1.0"
+version = "0.0.1-alpha.1"
 dependencies = [
  "ed25519-dalek",
  "hyper",
@@ -938,7 +921,7 @@ checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 
 [[package]]
 name = "macros"
-version = "0.1.0"
+version = "0.0.1-alpha.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1291,7 +1274,7 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
 name = "rest-api"
-version = "0.1.0"
+version = "0.0.1-alpha.1"
 dependencies = [
  "bigdecimal",
  "client",
@@ -1888,6 +1871,23 @@ name = "wasi"
 version = "0.11.0+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
+
+[[package]]
+name = "websocket"
+version = "0.0.1-alpha.1"
+dependencies = [
+ "bigdecimal",
+ "client",
+ "env_logger",
+ "futures-util",
+ "general",
+ "lazy_static",
+ "log",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-stream",
+]
 
 [[package]]
 name = "which"

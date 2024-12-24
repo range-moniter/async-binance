@@ -16,7 +16,7 @@ where
 {
     pub fn payload(&self) -> &O {
         match self {
-            SocketPayloadActor::Payload(ref payload) => payload,
+            &SocketPayloadActor::Payload(ref payload) => payload,
         }
     }
 }

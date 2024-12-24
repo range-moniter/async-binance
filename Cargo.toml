@@ -5,14 +5,17 @@ members = [
     "client",
     "general",
     "rest-api",
-
 ]
-
+resolver = "2"
 
 [workspace.package]
+name = "async-binance"
+version = "0.0.1-alpha.1"
 authors = ["range.moniter@gmail.com"]
-edition = "2021"
-
+edition = "2024"
+description = "a library connect binance api"
+repository = "https://github.com/range-moniter/async-binance"
+license = "MIT"
 
 [workspace.dependencies]
 hmac = "0.12.1"
