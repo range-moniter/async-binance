@@ -67,7 +67,9 @@ where
             .await;
         Ok(())
     }
-
+    pub fn get_all_subscribers(&self) -> HashSet<I> {
+        self.socket_item.clone()
+    }
     pub async fn close(self) {
         self.socket_actor_handle.send_close().await;
     }

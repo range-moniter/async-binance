@@ -13,6 +13,9 @@ impl AggTradeStream {
     pub fn new(symbol: Symbol) -> Self {
         Self { symbol }
     }
+    pub fn symbol(&self) -> &Symbol {
+        &self.symbol
+    }
 }
 
 impl StreamNameFormat for AggTradeStream {

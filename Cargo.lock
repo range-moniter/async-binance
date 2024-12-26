@@ -1876,6 +1876,7 @@ checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 name = "websocket"
 version = "0.0.1-alpha.1"
 dependencies = [
+ "async-trait",
  "bigdecimal",
  "client",
  "env_logger",

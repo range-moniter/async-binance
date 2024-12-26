@@ -1,18 +1,20 @@
-use std::pin::Pin;
-use futures_util::Stream;
+use crate::SocketOperator;
 use crate::market::types::symbol_ticker::{SymbolTickerPayload, SymbolTickerStream};
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
 use client::stream::stream::SocketPayloadProcess;
+use futures_util::Stream;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
+use std::collections::HashSet;
+use std::pin::Pin;
 
-pub type SymbolTickerResponseStream = Pin<Box<dyn Stream<Item=BinanceResult<SocketPayloadActor<SymbolTickerPayload>>> + Send>>;
+pub type SymbolTickerResponseStream =
+    Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<SymbolTickerPayload>>> + Send>>;
 
 pub struct SymbolTickerClient {
     websocket_client: WebsocketClient<SymbolTickerStream>,
 }
-
 
 impl SymbolTickerClient {
     pub fn new(websocket_client: WebsocketClient<SymbolTickerStream>) -> Self {
@@ -20,36 +22,83 @@ impl SymbolTickerClient {
     }
 
     pub async fn subscribe_ticker(&mut self, symbol: Symbol) {
-        self.websocket_client.subscribe_single(SymbolTickerStream::new(symbol)).await.unwrap();
+        self.websocket_client
+            .subscribe_single(SymbolTickerStream::new(symbol))
+            .await
+            .unwrap();
     }
 
-
     pub async fn subscribe_ticker_multi(&mut self, params: Vec<Symbol>) {
-        let params = params.into_iter()
+        let params = params
+            .into_iter()
             .map(|symbol| SymbolTickerStream::new(symbol))
             .collect::<Vec<_>>();
-        self.websocket_client.subscribe_multiple(params).await.unwrap()
+        self.websocket_client
+            .subscribe_multiple(params)
+            .await
+            .unwrap()
     }
 
     pub async fn unsubscribe_ticker(&mut self, symbol: Symbol) {
-        self.websocket_client.unsubscribe_single(SymbolTickerStream::new(symbol)).await.unwrap();
+        self.websocket_client
+            .unsubscribe_single(SymbolTickerStream::new(symbol))
+            .await
+            .unwrap();
     }
 
     pub async fn unsubscribe_ticker_multi(&mut self, symbols: Vec<Symbol>) {
-        let params = symbols.into_iter()
+        let params = symbols
+            .into_iter()
             .map(|symbol| SymbolTickerStream::new(symbol))
             .collect::<Vec<_>>();
-        self.websocket_client.unsubscribe_multiple(params).await.unwrap();
+        self.websocket_client
+            .unsubscribe_multiple(params)
+            .await
+            .unwrap();
     }
 
     pub async fn close(self) {
         self.websocket_client.close().await;
     }
 }
+impl SocketOperator<SymbolTickerStream> for SymbolTickerClient {
+    async fn close(self) {
+        self.close().await
+    }
 
-pub(crate) async fn symbol_ticker_payload_process<P>(trade_response_stream: SymbolTickerResponseStream,
-                                                     mut processor: P)
-where
+    async fn subscribe_with_entity(&mut self, item: SymbolTickerStream) {
+        self.websocket_client.subscribe_single(item).await.unwrap()
+    }
+
+    async fn subscribe_with_entities(&mut self, items: Vec<SymbolTickerStream>) {
+        self.websocket_client
+            .subscribe_multiple(items)
+            .await
+            .unwrap()
+    }
+
+    async fn unsubscribe_with_entity(&mut self, item: SymbolTickerStream) {
+        self.websocket_client
+            .unsubscribe_single(item)
+            .await
+            .unwrap()
+    }
+
+    async fn unsubscribe_with_entities(&mut self, items: Vec<SymbolTickerStream>) {
+        self.websocket_client
+            .unsubscribe_multiple(items)
+            .await
+            .unwrap()
+    }
+
+    fn get_all_entities(&self) -> HashSet<SymbolTickerStream> {
+        self.websocket_client.get_all_subscribers()
+    }
+}
+pub(crate) async fn symbol_ticker_payload_process<P>(
+    trade_response_stream: SymbolTickerResponseStream,
+    mut processor: P,
+) where
     P: SocketPayloadProcess<SymbolTickerPayload> + Send + 'static,
 {
     processor.process(trade_response_stream).await;
@@ -57,12 +106,12 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
-    use tokio::time::sleep;
+    use super::*;
+    use crate::market_socket_ct::BinanceMarketWebsocketClient;
     use env_logger::Builder;
     use log::Level;
-    use crate::market_socket_ct::BinanceMarketWebsocketClient;
-    use super::*;
+    use std::time::Duration;
+    use tokio::time::sleep;
     #[tokio::test]
     async fn test_average_price() {
         Builder::from_default_env()
@@ -71,15 +120,21 @@ mod tests {
 
         let mut symbol_ticker_client = BinanceMarketWebsocketClient::symbol_ticker().await;
 
-        symbol_ticker_client.subscribe_ticker(Symbol::new("ARKUSDT")).await;
+        symbol_ticker_client
+            .subscribe_ticker(Symbol::new("ARKUSDT"))
+            .await;
 
         sleep(Duration::from_secs(15)).await;
 
-        symbol_ticker_client.subscribe_ticker(Symbol::new("FILUSDT")).await;
+        symbol_ticker_client
+            .subscribe_ticker(Symbol::new("FILUSDT"))
+            .await;
 
         sleep(Duration::from_secs(20)).await;
 
-        symbol_ticker_client.unsubscribe_ticker(Symbol::new("FILUSDT")).await;
+        symbol_ticker_client
+            .unsubscribe_ticker(Symbol::new("FILUSDT"))
+            .await;
 
         sleep(Duration::from_secs(20)).await;
 

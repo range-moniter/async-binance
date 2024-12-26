@@ -19,3 +19,4 @@ env_logger.workspace = true
 tokio-stream.workspace = true
 general = {path = "../general"}
 client = {path = "../client" , features = ["default"]}
+async-trait.workspace = true
