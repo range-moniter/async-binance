@@ -22,7 +22,7 @@ pub trait SocketPayloadProcess<I: DeserializeOwned + Send + Debug + 'static> {
 #[derive(Debug)]
 pub struct DefaultStreamPayloadProcess<F, I>
 where
-    F: Fn(BinanceResult<SocketPayloadActor<I>>) + Send,
+    F: FnMut(BinanceResult<SocketPayloadActor<I>>) + Send,
 {
     func: F,
     _phantom: PhantomData<I>,
@@ -30,7 +30,7 @@ where
 
 impl<F, I> DefaultStreamPayloadProcess<F, I>
 where
-    F: Fn(BinanceResult<SocketPayloadActor<I>>) + Send,
+    F: FnMut(BinanceResult<SocketPayloadActor<I>>) + Send,
     I: DeserializeOwned + Send + Debug + 'static,
 {
     pub fn new(func: F) -> Self {
@@ -39,7 +39,7 @@ where
             _phantom: Default::default(),
         }
     }
-    pub fn call(&self, param: BinanceResult<SocketPayloadActor<I>>) {
+    pub fn call(&mut self, param: BinanceResult<SocketPayloadActor<I>>) {
         (self.func)(param)
     }
 }
@@ -47,7 +47,7 @@ where
 #[async_trait]
 impl<I, F> SocketPayloadProcess<I> for DefaultStreamPayloadProcess<F, I>
 where
-    F: Fn(BinanceResult<SocketPayloadActor<I>>) + Send,
+    F: FnMut(BinanceResult<SocketPayloadActor<I>>) + Send,
     I: DeserializeOwned + Send + Debug + 'static,
 {
     async fn process(
