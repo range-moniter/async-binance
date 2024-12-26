@@ -8,6 +8,7 @@ use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::collections::HashSet;
 use std::pin::Pin;
+use async_trait::async_trait;
 
 pub type AvgPriceResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<AveragePricePayload>>> + Send>>;
@@ -60,8 +61,8 @@ impl AveragePriceClient {
         self.websocket_client.close().await;
     }
 }
-
-impl SocketOperator<AveragePricePayload> for AveragePriceClient {
+#[async_trait]
+impl SocketOperator<AveragePriceStream> for AveragePriceClient {
     async fn close(self) {
         self.close().await
     }

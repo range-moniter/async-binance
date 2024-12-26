@@ -8,6 +8,7 @@ use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::collections::HashSet;
 use std::pin::Pin;
+use async_trait::async_trait;
 
 pub type SymbolTickerResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<SymbolTickerPayload>>> + Send>>;
@@ -61,6 +62,7 @@ impl SymbolTickerClient {
         self.websocket_client.close().await;
     }
 }
+#[async_trait]
 impl SocketOperator<SymbolTickerStream> for SymbolTickerClient {
     async fn close(self) {
         self.close().await

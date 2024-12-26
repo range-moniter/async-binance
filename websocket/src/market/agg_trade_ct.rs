@@ -8,6 +8,7 @@ use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::collections::HashSet;
 use std::pin::Pin;
+use async_trait::async_trait;
 
 pub type AggTradeResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<AggTradeStreamPayload>>> + Send>>;
@@ -57,8 +58,8 @@ impl AggTradeClient {
         self.websocket_client.close().await;
     }
 }
-
-impl SocketOperator<AggTradeStreamPayload> for AggTradeClient {
+#[async_trait]
+impl SocketOperator<AggTradeStream> for AggTradeClient {
     async fn close(self) {
         self.close().await;
     }

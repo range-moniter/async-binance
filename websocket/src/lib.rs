@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use async_trait::async_trait;
 pub use client::stream;
 pub use general::*;
 pub mod market;
@@ -6,6 +7,7 @@ pub mod market_socket_ct;
 pub mod user_data_stream_ct;
 pub mod userdata;
 
+#[async_trait]
 pub trait SocketOperator<I> {
     async fn close(self);
     async fn subscribe_with_entity(&mut self, item: I);
