@@ -1,4 +1,3 @@
-use crate::SocketOperator;
 use crate::market::types::average_price::{AveragePricePayload, AveragePriceStream};
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
@@ -6,9 +5,7 @@ use client::stream::stream::SocketPayloadProcess;
 use futures_util::Stream;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
-use std::collections::HashSet;
 use std::pin::Pin;
-use async_trait::async_trait;
 
 pub type AvgPriceResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<AveragePricePayload>>> + Send>>;
@@ -61,37 +58,6 @@ impl AveragePriceClient {
         self.websocket_client.close().await;
     }
 }
-#[async_trait]
-impl SocketOperator<AveragePriceStream> for AveragePriceClient {
-    async fn close(self) {
-        self.close().await
-    }
-    async fn subscribe_with_entity(&mut self, item: AveragePriceStream) {
-        self.websocket_client.subscribe_single(item).await.unwrap();
-    }
-    async fn subscribe_with_entities(&mut self, items: Vec<AveragePriceStream>) {
-        self.websocket_client
-            .subscribe_multiple(items)
-            .await
-            .unwrap();
-    }
-    async fn unsubscribe_with_entity(&mut self, item: AveragePriceStream) {
-        self.websocket_client
-            .unsubscribe_single(item)
-            .await
-            .unwrap();
-    }
-    async fn unsubscribe_with_entities(&mut self, items: Vec<AveragePriceStream>) {
-        self.websocket_client
-            .unsubscribe_multiple(items)
-            .await
-            .unwrap();
-    }
-    fn get_all_entities(&self) -> HashSet<AveragePriceStream> {
-        self.websocket_client.get_all_subscribers()
-    }
-}
-
 pub(crate) async fn avg_price_payload_process<P>(
     trade_response_stream: AvgPriceResponseStream,
     mut processor: P,

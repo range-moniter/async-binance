@@ -1,4 +1,3 @@
-use crate::SocketOperator;
 use crate::market::types::symbol_ticker::{SymbolTickerPayload, SymbolTickerStream};
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
@@ -6,9 +5,7 @@ use client::stream::stream::SocketPayloadProcess;
 use futures_util::Stream;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
-use std::collections::HashSet;
 use std::pin::Pin;
-use async_trait::async_trait;
 
 pub type SymbolTickerResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<SymbolTickerPayload>>> + Send>>;
@@ -60,41 +57,6 @@ impl SymbolTickerClient {
 
     pub async fn close(self) {
         self.websocket_client.close().await;
-    }
-}
-#[async_trait]
-impl SocketOperator<SymbolTickerStream> for SymbolTickerClient {
-    async fn close(self) {
-        self.close().await
-    }
-
-    async fn subscribe_with_entity(&mut self, item: SymbolTickerStream) {
-        self.websocket_client.subscribe_single(item).await.unwrap()
-    }
-
-    async fn subscribe_with_entities(&mut self, items: Vec<SymbolTickerStream>) {
-        self.websocket_client
-            .subscribe_multiple(items)
-            .await
-            .unwrap()
-    }
-
-    async fn unsubscribe_with_entity(&mut self, item: SymbolTickerStream) {
-        self.websocket_client
-            .unsubscribe_single(item)
-            .await
-            .unwrap()
-    }
-
-    async fn unsubscribe_with_entities(&mut self, items: Vec<SymbolTickerStream>) {
-        self.websocket_client
-            .unsubscribe_multiple(items)
-            .await
-            .unwrap()
-    }
-
-    fn get_all_entities(&self) -> HashSet<SymbolTickerStream> {
-        self.websocket_client.get_all_subscribers()
     }
 }
 pub(crate) async fn symbol_ticker_payload_process<P>(

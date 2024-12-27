@@ -1,4 +1,3 @@
-use crate::SocketOperator;
 use crate::market::types::book_depth::{BookDepthStream, BookDepthStreamPayload};
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
@@ -7,9 +6,7 @@ use futures_util::Stream;
 use general::enums::level::Level;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
-use std::collections::HashSet;
 use std::pin::Pin;
-use async_trait::async_trait;
 
 pub type BookDepthResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<BookDepthStreamPayload>>> + Send>>;
@@ -60,36 +57,6 @@ impl BookDepthClient {
     }
     pub async fn close(self) {
         self.websocket_client.close().await;
-    }
-}
-#[async_trait]
-impl SocketOperator<BookDepthStream> for BookDepthClient {
-    async fn close(self) {
-        self.close().await
-    }
-    async fn subscribe_with_entity(&mut self, item: BookDepthStream) {
-        self.websocket_client.subscribe_single(item).await.unwrap();
-    }
-    async fn subscribe_with_entities(&mut self, items: Vec<BookDepthStream>) {
-        self.websocket_client
-            .subscribe_multiple(items)
-            .await
-            .unwrap();
-    }
-    async fn unsubscribe_with_entity(&mut self, item: BookDepthStream) {
-        self.websocket_client
-            .unsubscribe_single(item)
-            .await
-            .unwrap();
-    }
-    async fn unsubscribe_with_entities(&mut self, items: Vec<BookDepthStream>) {
-        self.websocket_client
-            .unsubscribe_multiple(items)
-            .await
-            .unwrap();
-    }
-    fn get_all_entities(&self) -> HashSet<BookDepthStream> {
-        self.websocket_client.get_all_subscribers()
     }
 }
 
