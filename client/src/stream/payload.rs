@@ -7,6 +7,7 @@ use general::result::BinanceResult;
 pub enum SocketPayloadActor<O>
 {
     Payload(O),
+    Close(u8),
 }
 
 impl<O> SocketPayloadActor<O>
@@ -16,6 +17,7 @@ where
     pub fn payload(self) -> O {
         match self {
             SocketPayloadActor::Payload(payload) => payload,
+            _ => panic!("other payload cannot support"),
         }
     }
 }

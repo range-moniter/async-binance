@@ -241,6 +241,7 @@ async fn run_socket_receive<O>(
                 }
                 Message::Close(_) => {
                     log::info!("Accept socket close message, socket will close");
+                    payload_sender.send(Ok(SocketPayloadActor::Close(1))).unwrap();
                     break;
                 }
                 Message::Text(data) => {
