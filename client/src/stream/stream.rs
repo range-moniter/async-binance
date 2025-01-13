@@ -12,7 +12,7 @@ pub trait StreamNameFormat {
 }
 
 #[async_trait]
-pub trait SocketPayloadProcess<I: DeserializeOwned + Send + Debug + 'static> {
+pub trait SocketPayloadProcess<I> {
     async fn process(
         &mut self,
         stream: Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<I>>> + Send>>,
