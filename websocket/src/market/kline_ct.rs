@@ -112,25 +112,25 @@ mod tests {
     use std::time::Duration;
     use tokio::time::sleep;
 
-    // #[tokio::test]
-    // async fn test_average_price() {
-    //     Builder::from_default_env()
-    //         .filter(None, log::LevelFilter::Debug)
-    //         .init();
-    //
-    //     let mut kline_client = BinanceMarketWebsocketClient::kline(DefaultStreamPayloadProcess::default()).await;
-    //
-    //     kline_client
-    //         .subscribe_item((Symbol::new("ARKUSDT"), Interval::Minute1, None))
-    //         .await;
-    //
-    //     sleep(Duration::from_secs(20)).await;
-    //
-    //     kline_client
-    //         .subscribe_item((Symbol::new("FILUSDT"), Interval::Second1, None))
-    //         .await;
-    //     kline_client.close().await;
-    //
-    //     sleep(Duration::from_secs(20)).await;
-    // }
+    #[tokio::test]
+    async fn test_average_price() {
+        Builder::from_default_env()
+            .filter(None, log::LevelFilter::Debug)
+            .init();
+
+        let mut kline_client = BinanceMarketWebsocketClient::kline(DefaultStreamPayloadProcess::new()).await;
+
+        kline_client
+            .subscribe_item((Symbol::new("ARKUSDT"), Interval::Minute1, None))
+            .await;
+
+        sleep(Duration::from_secs(20)).await;
+
+        kline_client
+            .subscribe_item((Symbol::new("FILUSDT"), Interval::Second1, None))
+            .await;
+        kline_client.close().await;
+
+        sleep(Duration::from_secs(20)).await;
+    }
 }

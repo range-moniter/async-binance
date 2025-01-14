@@ -104,26 +104,26 @@ mod tests {
     use std::time::Duration;
     use tokio::time::sleep;
 
-    // #[tokio::test]
-    // async fn test_agg_trade() {
-    //     Builder::from_default_env()
-    //         .filter(None, log::LevelFilter::Debug)
-    //         .init();
-    //
-    //     let mut trade_client = BinanceMarketWebsocketClient::agg_trade(DefaultStreamPayloadProcess::default()).await;
-    //
-    //     trade_client.subscribe_item(Symbol::new("ARKUSDT")).await;
-    //
-    //     sleep(Duration::from_secs(15)).await;
-    //
-    //     trade_client.subscribe_item(Symbol::new("FILUSDT")).await;
-    //
-    //     sleep(Duration::from_secs(20)).await;
-    //
-    //     println!("send close message");
-    //
-    //     trade_client.close().await;
-    //
-    //     sleep(Duration::from_millis(1000000)).await;
-    // }
+    #[tokio::test]
+    async fn test_agg_trade() {
+        Builder::from_default_env()
+            .filter(None, log::LevelFilter::Debug)
+            .init();
+
+        let mut trade_client = BinanceMarketWebsocketClient::agg_trade(DefaultStreamPayloadProcess::new()).await;
+
+        trade_client.subscribe_item(Symbol::new("ARKUSDT")).await;
+
+        sleep(Duration::from_secs(15)).await;
+
+        trade_client.subscribe_item(Symbol::new("FILUSDT")).await;
+
+        sleep(Duration::from_secs(20)).await;
+
+        println!("send close message");
+
+        trade_client.close().await;
+
+        sleep(Duration::from_millis(10)).await;
+    }
 }

@@ -105,30 +105,30 @@ mod tests {
     use tokio::time::sleep;
     use client::stream::stream::DefaultStreamPayloadProcess;
 
-    // #[tokio::test]
-    // async fn test_average_price() {
-    //     Builder::from_default_env()
-    //         .filter(None, log::LevelFilter::Debug)
-    //         .init();
-    //
-    //     let mut book_depth_client = BinanceMarketWebsocketClient::book_depth(DefaultStreamPayloadProcess::default()).await;
-    //
-    //     book_depth_client
-    //         .subscribe_item((Symbol::new("ARKUSDT"), Level::L1, None))
-    //         .await;
-    //
-    //     sleep(Duration::from_secs(15)).await;
-    //
-    //     book_depth_client
-    //         .subscribe_item((Symbol::new("FILUSDT"), Level::L1, None))
-    //         .await;
-    //
-    //     sleep(Duration::from_secs(20)).await;
-    //
-    //     println!("send close message");
-    //
-    //     book_depth_client.close().await;
-    //
-    //     sleep(Duration::from_secs(200)).await;
-    // }
+    #[tokio::test]
+    async fn test_average_price() {
+        Builder::from_default_env()
+            .filter(None, log::LevelFilter::Debug)
+            .init();
+
+        let mut book_depth_client = BinanceMarketWebsocketClient::book_depth(DefaultStreamPayloadProcess::new()).await;
+
+        book_depth_client
+            .subscribe_item((Symbol::new("ARKUSDT"), Level::L1, None))
+            .await;
+
+        sleep(Duration::from_secs(15)).await;
+
+        book_depth_client
+            .subscribe_item((Symbol::new("FILUSDT"), Level::L1, None))
+            .await;
+
+        sleep(Duration::from_secs(20)).await;
+
+        println!("send close message");
+
+        book_depth_client.close().await;
+
+        sleep(Duration::from_secs(200)).await;
+    }
 }

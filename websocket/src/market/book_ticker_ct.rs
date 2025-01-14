@@ -105,36 +105,36 @@ mod tests {
     use std::time::Duration;
     use tokio::time::sleep;
 
-    // #[tokio::test]
-    // async fn test_average_price() {
-    //     Builder::from_default_env()
-    //         .filter(None, log::LevelFilter::Debug)
-    //         .init();
-    //
-    //     let mut symbol_book_ticker_client = BinanceMarketWebsocketClient::kline(DefaultStreamPayloadProcess::default()).await;
-    //
-    //     symbol_book_ticker_client
-    //         .subscribe_item((Symbol::new("ARKUSDT"), Interval::Second1, None))
-    //         .await;
-    //
-    //     sleep(Duration::from_secs(15)).await;
-    //
-    //     symbol_book_ticker_client
-    //         .subscribe_item((Symbol::new("ETHUSDT"), Interval::Second1, None))
-    //         .await;
-    //
-    //     sleep(Duration::from_secs(20)).await;
-    //
-    //     symbol_book_ticker_client
-    //         .unsubscribe_item((Symbol::new("BTCUSDT"), Interval::Second1, None))
-    //         .await;
-    //
-    //     sleep(Duration::from_secs(20)).await;
-    //
-    //     println!("send close message");
-    //
-    //     symbol_book_ticker_client.close().await;
-    //
-    //     sleep(Duration::from_secs(200)).await;
-    // }
+    #[tokio::test]
+    async fn test_average_price() {
+        Builder::from_default_env()
+            .filter(None, log::LevelFilter::Debug)
+            .init();
+
+        let mut symbol_book_ticker_client = BinanceMarketWebsocketClient::kline(DefaultStreamPayloadProcess::new()).await;
+
+        symbol_book_ticker_client
+            .subscribe_item((Symbol::new("ARKUSDT"), Interval::Second1, None))
+            .await;
+
+        sleep(Duration::from_secs(15)).await;
+
+        symbol_book_ticker_client
+            .subscribe_item((Symbol::new("ETHUSDT"), Interval::Second1, None))
+            .await;
+
+        sleep(Duration::from_secs(20)).await;
+
+        symbol_book_ticker_client
+            .unsubscribe_item((Symbol::new("BTCUSDT"), Interval::Second1, None))
+            .await;
+
+        sleep(Duration::from_secs(20)).await;
+
+        println!("send close message");
+
+        symbol_book_ticker_client.close().await;
+
+        sleep(Duration::from_secs(200)).await;
+    }
 }
