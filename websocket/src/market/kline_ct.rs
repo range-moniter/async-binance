@@ -107,7 +107,6 @@ mod tests {
     use super::*;
     use crate::market_socket_ct::BinanceMarketWebsocketClient;
     use env_logger::Builder;
-    use log::Level;
     use std::time::Duration;
     use tokio::time::sleep;
     #[tokio::test]
@@ -122,13 +121,13 @@ mod tests {
             .subscribe_item((Symbol::new("ARKUSDT"), Interval::Minute1, None))
             .await;
 
-        sleep(Duration::from_secs(60)).await;
+        sleep(Duration::from_secs(20)).await;
 
         kline_client
             .subscribe_item((Symbol::new("FILUSDT"), Interval::Second1, None))
             .await;
         kline_client.close().await;
 
-        sleep(Duration::from_secs(200)).await;
+        sleep(Duration::from_secs(20)).await;
     }
 }

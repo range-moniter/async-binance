@@ -54,8 +54,7 @@ mod tests {
 
     #[test]
     fn test_level() {
-        let mut stream = BookDepthStream::new(Symbol::new("S"), Level::L1);
-        stream.put_speed(Speed::Ms1000);
+        let mut stream = BookDepthStream::new(Symbol::new("S"), Level::L1, Some(Speed::Ms1000));
         println!("{}", stream.stream_name());
     }
 

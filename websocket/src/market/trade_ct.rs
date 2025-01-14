@@ -111,10 +111,6 @@ mod tests {
 
         trade_client.subscribe_item(Symbol::new("ARKUSDT")).await;
 
-        sleep(Duration::from_secs(10)).await;
-
-        trade_client.subscribe_item(Symbol::new("FILUSDT")).await;
-
         sleep(Duration::from_secs(20)).await;
 
         println!("send close message");

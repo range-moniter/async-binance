@@ -19,35 +19,13 @@ pub trait SocketPayloadProcess<I> {
     );
 }
 
-#[derive(Debug)]
-pub struct DefaultStreamPayloadProcess<F, I>
-where
-    F: FnMut(BinanceResult<SocketPayloadActor<I>>) + Send,
-{
-    func: F,
-    _phantom: PhantomData<I>,
-}
+#[derive(Debug, Default)]
+pub struct DefaultStreamPayloadProcess;
 
-impl<F, I> DefaultStreamPayloadProcess<F, I>
-where
-    F: FnMut(BinanceResult<SocketPayloadActor<I>>) + Send,
-    I: DeserializeOwned + Send + Debug + 'static,
-{
-    pub fn new(func: F) -> Self {
-        DefaultStreamPayloadProcess {
-            func,
-            _phantom: Default::default(),
-        }
-    }
-    pub fn call(&mut self, param: BinanceResult<SocketPayloadActor<I>>) {
-        (self.func)(param)
-    }
-}
 
 #[async_trait]
-impl<I, F> SocketPayloadProcess<I> for DefaultStreamPayloadProcess<F, I>
+impl<I> SocketPayloadProcess<I> for DefaultStreamPayloadProcess
 where
-    F: FnMut(BinanceResult<SocketPayloadActor<I>>) + Send,
     I: DeserializeOwned + Send + Debug + 'static,
 {
     async fn process(
@@ -55,7 +33,14 @@ where
         mut stream: Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<I>>> + Send>>,
     ) {
         while let Some(data) = stream.next().await {
-            self.call(data);
+            match data {
+                Ok(item) => {
+                    log::info!("Received data: {:?}", item);
+                }
+                Err(e) => {
+                    log::error!("Accept socket payload error: error message is: {}", e);
+                }
+            }
         }
     }
 }

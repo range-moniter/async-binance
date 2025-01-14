@@ -1,5 +1,4 @@
 use client::stream::adaptor::BinanceWebsocketAdaptor;
-use client::stream::payload::default_payload_output_func;
 use client::stream::stream::{DefaultStreamPayloadProcess, SocketPayloadProcess};
 use crate::market::agg_trade_ct::AggTradeClient;
 use crate::market::avg_price_ct::AveragePriceClient;
@@ -26,8 +25,7 @@ pub struct BinanceMarketWebsocketClient;
 
 impl BinanceMarketWebsocketClient {
     pub async fn trade() -> TradeClient {
-        let process = DefaultStreamPayloadProcess::new(default_payload_output_func);
-        Self::trade_with_process(process).await
+        Self::trade_with_process(DefaultStreamPayloadProcess::default()).await
     }
 
     pub async fn trade_with_process<P>(process: P) -> TradeClient
@@ -38,8 +36,7 @@ impl BinanceMarketWebsocketClient {
     }
 
     pub async fn agg_trade() -> AggTradeClient {
-        let process = DefaultStreamPayloadProcess::new(default_payload_output_func);
-        Self::agg_trade_with_process(process).await
+        Self::agg_trade_with_process(DefaultStreamPayloadProcess::default()).await
     }
 
     pub async fn agg_trade_with_process<P>(process: P) -> AggTradeClient
@@ -50,8 +47,7 @@ impl BinanceMarketWebsocketClient {
     }
 
     pub async fn average_price() -> AveragePriceClient {
-        let process = DefaultStreamPayloadProcess::new(default_payload_output_func);
-        Self::average_price_with_process(process).await
+        Self::average_price_with_process(DefaultStreamPayloadProcess::default()).await
     }
 
     pub async fn average_price_with_process<P>(process: P) -> AveragePriceClient
@@ -62,8 +58,7 @@ impl BinanceMarketWebsocketClient {
     }
 
     pub async fn book_depth() -> BookDepthClient {
-        let process = DefaultStreamPayloadProcess::new(default_payload_output_func);
-        Self::book_depth_with_process(process).await
+        Self::book_depth_with_process(DefaultStreamPayloadProcess::default()).await
     }
 
     pub async fn book_depth_with_process<P>(process: P) -> BookDepthClient
@@ -74,8 +69,7 @@ impl BinanceMarketWebsocketClient {
         BookDepthClient::create_client(process).await
     }
     pub async fn depth() -> DepthClient {
-        let process = DefaultStreamPayloadProcess::new(default_payload_output_func);
-        Self::depth_with_process(process).await
+        Self::depth_with_process(DefaultStreamPayloadProcess::default()).await
     }
 
     pub async fn depth_with_process<P>(process: P) -> DepthClient
@@ -86,8 +80,7 @@ impl BinanceMarketWebsocketClient {
     }
 
     pub async fn kline() -> KlineClient {
-        let process = DefaultStreamPayloadProcess::new(default_payload_output_func);
-        Self::kline_with_process(process).await
+        Self::kline_with_process(DefaultStreamPayloadProcess::default()).await
     }
 
     pub async fn kline_with_process<P>(process: P) -> KlineClient
@@ -98,8 +91,7 @@ impl BinanceMarketWebsocketClient {
     }
 
     pub async fn symbol_book_ticker() -> SymbolBookTickerClient {
-        let process = DefaultStreamPayloadProcess::new(default_payload_output_func);
-        Self::symbol_book_ticker_with_process(process).await
+        Self::symbol_book_ticker_with_process(DefaultStreamPayloadProcess::default()).await
     }
 
     pub async fn symbol_book_ticker_with_process<P>(process: P) -> SymbolBookTickerClient
@@ -110,8 +102,7 @@ impl BinanceMarketWebsocketClient {
     }
 
     pub async fn symbol_mini_ticker() -> SymbolMiniTickerClient {
-        let process = DefaultStreamPayloadProcess::new(default_payload_output_func);
-        Self::symbol_mini_ticker_with_process(process).await
+        Self::symbol_mini_ticker_with_process(DefaultStreamPayloadProcess::default()).await
     }
 
     pub async fn symbol_mini_ticker_with_process<P>(process: P) -> SymbolMiniTickerClient
@@ -122,8 +113,7 @@ impl BinanceMarketWebsocketClient {
     }
 
     pub async fn symbol_rolling_ticker() -> SymbolRollingClient {
-        let process = DefaultStreamPayloadProcess::new(default_payload_output_func);
-        Self::symbol_rolling_ticker_with_process(process).await
+        Self::symbol_rolling_ticker_with_process(DefaultStreamPayloadProcess::default()).await
     }
 
     pub async fn symbol_rolling_ticker_with_process<P>(process: P) -> SymbolRollingClient
@@ -134,8 +124,7 @@ impl BinanceMarketWebsocketClient {
     }
 
     pub async fn symbol_ticker() -> SymbolTickerClient {
-        let process = DefaultStreamPayloadProcess::new(default_payload_output_func);
-        Self::symbol_ticker_with_process(process).await
+        Self::symbol_ticker_with_process(DefaultStreamPayloadProcess::default()).await
     }
 
     pub async fn symbol_ticker_with_process<P>(process: P) -> SymbolTickerClient

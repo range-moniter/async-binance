@@ -98,7 +98,6 @@ mod tests {
     use super::*;
     use crate::market_socket_ct::BinanceMarketWebsocketClient;
     use env_logger::Builder;
-    use log::Level;
     use std::time::Duration;
     use tokio::time::sleep;
     #[tokio::test]
