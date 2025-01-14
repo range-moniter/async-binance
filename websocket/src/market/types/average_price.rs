@@ -14,6 +14,10 @@ impl AveragePriceStream {
     pub fn new(symbol: Symbol) -> AveragePriceStream {
         AveragePriceStream { symbol }
     }
+
+    pub fn get_symbol(&self) -> Symbol {
+        self.symbol.clone()
+    }
 }
 
 impl StreamNameFormat for AveragePriceStream {

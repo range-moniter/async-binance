@@ -13,6 +13,9 @@ impl TradeStream {
     pub fn new(symbol: Symbol) -> TradeStream {
         TradeStream { symbol }
     }
+    pub fn get_symbol(&self) -> Symbol {
+        self.symbol.clone()
+    }
 }
 
 

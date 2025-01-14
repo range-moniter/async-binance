@@ -1,26 +1,26 @@
-use crate::market::agg_trade_ct::{agg_trade_payload_process, AggTradeClient};
-use crate::market::avg_price_ct::{avg_price_payload_process, AveragePriceClient};
-use crate::market::book_depth_ct::{book_depth_payload_process, BookDepthClient};
-use crate::market::book_ticker_ct::{symbol_book_ticker_payload_process, SymbolBookTickerClient};
-use crate::market::depth_ct::{depth_payload_process, DepthClient};
-use crate::market::kline_ct::{kline_payload_process, KlineClient};
-use crate::market::mini_ticker_ct::{symbol_mini_ticker_payload_process, SymbolMiniTickerClient};
-use crate::market::rolling_ct::{symbol_rolling_payload_process, SymbolRollingClient};
-use crate::market::ticker_ct::{symbol_ticker_payload_process, SymbolTickerClient};
-use crate::market::trade_ct::{trade_payload_process, TradeClient};
-use crate::market::types::agg_trade::{AggTradeStream, AggTradeStreamPayload};
-use crate::market::types::average_price::{AveragePricePayload, AveragePriceStream};
-use crate::market::types::book_depth::{BookDepthStream, BookDepthStreamPayload};
-use crate::market::types::depth::{DepthStream, DepthStreamPayload};
-use crate::market::types::kline::{KlineStream, KlineStreamPayload};
-use crate::market::types::symbol_book_ticker::{SymbolBookTickerPayload, SymbolBookTickerStream};
-use crate::market::types::symbol_mini_ticker::{SymbolMiniTickerPayload, SymbolMiniTickerStream};
-use crate::market::types::symbol_rolling::{SymbolRollingPayload, SymbolRollingWindowStream};
-use crate::market::types::symbol_ticker::{SymbolTickerPayload, SymbolTickerStream};
-use crate::market::types::trade::{TradeStream, TradeStreamPayload};
-use client::stream::client::WebsocketClient;
+use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::payload::default_payload_output_func;
 use client::stream::stream::{DefaultStreamPayloadProcess, SocketPayloadProcess};
+use crate::market::agg_trade_ct::AggTradeClient;
+use crate::market::avg_price_ct::AveragePriceClient;
+use crate::market::book_depth_ct::BookDepthClient;
+use crate::market::book_ticker_ct::SymbolBookTickerClient;
+use crate::market::depth_ct::DepthClient;
+use crate::market::kline_ct::KlineClient;
+use crate::market::mini_ticker_ct::SymbolMiniTickerClient;
+use crate::market::rolling_ct::SymbolRollingClient;
+use crate::market::ticker_ct::SymbolTickerClient;
+use crate::market::trade_ct::TradeClient;
+use crate::market::types::agg_trade::AggTradeStreamPayload;
+use crate::market::types::average_price::AveragePricePayload;
+use crate::market::types::book_depth::BookDepthStreamPayload;
+use crate::market::types::depth::DepthStreamPayload;
+use crate::market::types::kline::KlineStreamPayload;
+use crate::market::types::symbol_book_ticker::SymbolBookTickerPayload;
+use crate::market::types::symbol_mini_ticker::SymbolMiniTickerPayload;
+use crate::market::types::symbol_rolling::SymbolRollingPayload;
+use crate::market::types::symbol_ticker::SymbolTickerPayload;
+use crate::market::types::trade::TradeStreamPayload;
 
 pub struct BinanceMarketWebsocketClient;
 
@@ -34,13 +34,7 @@ impl BinanceMarketWebsocketClient {
     where
         P: SocketPayloadProcess<TradeStreamPayload> + Send + 'static,
     {
-        let (client, payload_receiver) =
-            WebsocketClient::<TradeStream>::new::<TradeStreamPayload>().await;
-        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
-            payload_receiver,
-        ));
-        tokio::spawn(trade_payload_process(trade_stream, process));
-        TradeClient::new(client)
+        TradeClient::create_client(process).await
     }
 
     pub async fn agg_trade() -> AggTradeClient {
@@ -52,13 +46,7 @@ impl BinanceMarketWebsocketClient {
     where
         P: SocketPayloadProcess<AggTradeStreamPayload> + Send + 'static,
     {
-        let (client, payload_receiver) =
-            WebsocketClient::<AggTradeStream>::new::<AggTradeStreamPayload>().await;
-        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
-            payload_receiver,
-        ));
-        tokio::spawn(agg_trade_payload_process(trade_stream, process));
-        AggTradeClient::new(client)
+        AggTradeClient::create_client(process).await
     }
 
     pub async fn average_price() -> AveragePriceClient {
@@ -70,13 +58,7 @@ impl BinanceMarketWebsocketClient {
     where
         P: SocketPayloadProcess<AveragePricePayload> + Send + 'static,
     {
-        let (client, payload_receiver) =
-            WebsocketClient::<AveragePriceStream>::new::<AveragePricePayload>().await;
-        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
-            payload_receiver,
-        ));
-        tokio::spawn(avg_price_payload_process(trade_stream, process));
-        AveragePriceClient::new(client)
+       AveragePriceClient::create_client(process).await
     }
 
     pub async fn book_depth() -> BookDepthClient {
@@ -88,13 +70,8 @@ impl BinanceMarketWebsocketClient {
     where
         P: SocketPayloadProcess<BookDepthStreamPayload> + Send + 'static,
     {
-        let (client, payload_receiver) =
-            WebsocketClient::<BookDepthStream>::new::<BookDepthStreamPayload>().await;
-        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
-            payload_receiver,
-        ));
-        tokio::spawn(book_depth_payload_process(trade_stream, process));
-        BookDepthClient::new(client)
+
+        BookDepthClient::create_client(process).await
     }
     pub async fn depth() -> DepthClient {
         let process = DefaultStreamPayloadProcess::new(default_payload_output_func);
@@ -105,13 +82,7 @@ impl BinanceMarketWebsocketClient {
     where
         P: SocketPayloadProcess<DepthStreamPayload> + Send + 'static,
     {
-        let (client, payload_receiver) =
-            WebsocketClient::<DepthStream>::new::<DepthStreamPayload>().await;
-        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
-            payload_receiver,
-        ));
-        tokio::spawn(depth_payload_process(trade_stream, process));
-        DepthClient::new(client)
+        DepthClient::create_client(process).await
     }
 
     pub async fn kline() -> KlineClient {
@@ -123,13 +94,7 @@ impl BinanceMarketWebsocketClient {
     where
         P: SocketPayloadProcess<KlineStreamPayload> + Send + 'static,
     {
-        let (client, payload_receiver) =
-            WebsocketClient::<KlineStream>::new::<KlineStreamPayload>().await;
-        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
-            payload_receiver,
-        ));
-        tokio::spawn(kline_payload_process(trade_stream, process));
-        KlineClient::new(client)
+        KlineClient::create_client(process).await
     }
 
     pub async fn symbol_book_ticker() -> SymbolBookTickerClient {
@@ -141,13 +106,7 @@ impl BinanceMarketWebsocketClient {
     where
         P: SocketPayloadProcess<SymbolBookTickerPayload> + Send + 'static,
     {
-        let (client, payload_receiver) =
-            WebsocketClient::<SymbolBookTickerStream>::new::<SymbolBookTickerPayload>().await;
-        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
-            payload_receiver,
-        ));
-        tokio::spawn(symbol_book_ticker_payload_process(trade_stream, process));
-        SymbolBookTickerClient::new(client)
+        SymbolBookTickerClient::create_client(process).await
     }
 
     pub async fn symbol_mini_ticker() -> SymbolMiniTickerClient {
@@ -159,13 +118,7 @@ impl BinanceMarketWebsocketClient {
     where
         P: SocketPayloadProcess<SymbolMiniTickerPayload> + Send + 'static,
     {
-        let (client, payload_receiver) =
-            WebsocketClient::<SymbolMiniTickerStream>::new::<SymbolMiniTickerPayload>().await;
-        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
-            payload_receiver,
-        ));
-        tokio::spawn(symbol_mini_ticker_payload_process(trade_stream, process));
-        SymbolMiniTickerClient::new(client)
+        SymbolMiniTickerClient::create_client(process).await
     }
 
     pub async fn symbol_rolling_ticker() -> SymbolRollingClient {
@@ -177,13 +130,7 @@ impl BinanceMarketWebsocketClient {
     where
         P: SocketPayloadProcess<SymbolRollingPayload> + Send + 'static,
     {
-        let (client, payload_receiver) =
-            WebsocketClient::<SymbolRollingWindowStream>::new::<SymbolRollingPayload>().await;
-        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
-            payload_receiver,
-        ));
-        tokio::spawn(symbol_rolling_payload_process(trade_stream, process));
-        SymbolRollingClient::new(client)
+        SymbolRollingClient::create_client(process)
     }
 
     pub async fn symbol_ticker() -> SymbolTickerClient {
@@ -195,12 +142,6 @@ impl BinanceMarketWebsocketClient {
     where
         P: SocketPayloadProcess<SymbolTickerPayload> + Send + 'static,
     {
-        let (client, payload_receiver) =
-            WebsocketClient::<SymbolTickerStream>::new::<SymbolTickerPayload>().await;
-        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
-            payload_receiver,
-        ));
-        tokio::spawn(symbol_ticker_payload_process(trade_stream, process));
-        SymbolTickerClient::new(client)
+        SymbolTickerClient::create_client(process).await
     }
 }

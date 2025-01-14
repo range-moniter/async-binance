@@ -14,14 +14,20 @@ pub struct KlineStream {
 }
 
 impl KlineStream {
-    pub fn new(symbol: Symbol, kline_type: Interval) -> Self {
+    pub fn new(symbol: Symbol, kline_type: Interval, timezone: Option<Timezone>) -> Self {
         Self {
-            symbol, kline_type, timezone: None,
+            symbol, kline_type, timezone,
         }
     }
 
-    pub fn timezone(&mut self, timezone: Timezone){
-        self.timezone = Some(timezone);
+    pub fn get_symbol(&self) -> Symbol {
+        self.symbol.clone()
+    }
+    pub fn get_kline_type(&self) -> Interval {
+        self.kline_type.clone()
+    }
+    pub fn get_timezone(&self) -> Option<Timezone> {
+        self.timezone.clone()
     }
 }
 

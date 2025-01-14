@@ -13,12 +13,17 @@ pub struct BookDepthStream {
 }
 
 impl BookDepthStream {
-    pub fn new(symbol: Symbol, level: Level) -> BookDepthStream {
-        BookDepthStream { symbol, level, speed: None }
+    pub fn new(symbol: Symbol, level: Level, speed: Option<Speed>) -> BookDepthStream {
+        BookDepthStream { symbol, level, speed }
     }
-
-    pub fn put_speed(&mut self, speed: Speed) {
-        self.speed = Some(speed);
+    pub fn get_level(&self) -> Level {
+        self.level
+    }
+    pub fn get_symbol(&self) -> Symbol {
+        self.symbol.clone()
+    }
+    pub fn get_speed(&self) -> Option<Speed> {
+        self.speed
     }
 }
 

@@ -13,8 +13,8 @@ impl AggTradeStream {
     pub fn new(symbol: Symbol) -> Self {
         Self { symbol }
     }
-    pub fn symbol(&self) -> &Symbol {
-        &self.symbol
+    pub fn get_symbol(&self) -> Symbol {
+        self.symbol.clone()
     }
 }
 

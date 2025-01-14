@@ -12,6 +12,10 @@ impl SymbolBookTickerStream {
     pub fn new(symbol: Symbol) -> SymbolBookTickerStream {
         SymbolBookTickerStream { symbol }
     }
+
+    pub fn get_symbol(&self) -> Symbol {
+        self.symbol.clone()
+    }
 }
 
 

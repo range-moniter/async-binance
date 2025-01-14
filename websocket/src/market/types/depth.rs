@@ -12,12 +12,14 @@ pub struct DepthStream {
 
 
 impl DepthStream {
-    pub fn new(symbol: Symbol) -> Self {
-        DepthStream {symbol, speed: None }
+    pub fn new(symbol: Symbol, speed: Option<Speed>) -> Self {
+        DepthStream {symbol, speed }
     }
-
-    pub fn put_speed(&mut self, speed: Speed) {
-        self.speed = Some(speed);
+    pub fn get_symbol(&self) -> Symbol {
+        self.symbol.clone()
+    }
+    pub fn get_speed(&self) -> Option<Speed> {
+        self.speed
     }
 }
 

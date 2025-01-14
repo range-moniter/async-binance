@@ -14,6 +14,9 @@ impl SymbolTickerStream {
     pub fn new(symbol: Symbol) -> SymbolTickerStream {
         SymbolTickerStream { symbol }
     }
+    pub fn get_symbol(&self) -> Symbol {
+        self.symbol.clone()
+    }
 }
 
 impl StreamNameFormat for SymbolTickerStream {

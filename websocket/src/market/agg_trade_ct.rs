@@ -1,4 +1,5 @@
 use crate::market::types::agg_trade::{AggTradeStream, AggTradeStreamPayload};
+use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
 use client::stream::stream::SocketPayloadProcess;
@@ -6,6 +7,7 @@ use futures_util::Stream;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
+use async_trait::async_trait;
 
 pub type AggTradeResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<AggTradeStreamPayload>>> + Send>>;
@@ -14,19 +16,38 @@ pub struct AggTradeClient {
     websocket_client: WebsocketClient<AggTradeStream>,
 }
 
-impl AggTradeClient {
-    pub fn new(websocket_client: WebsocketClient<AggTradeStream>) -> Self {
-        Self { websocket_client }
+#[async_trait]
+impl<P> BinanceWebsocketAdaptor<P> for AggTradeClient
+where
+    P: SocketPayloadProcess<AggTradeStreamPayload> + 'static + Send,
+{
+    type CLIENT = AggTradeClient;
+    type INPUT = Symbol;
+    type OUTPUT = AggTradeStreamPayload;
+
+    async fn create_client(process: P) -> Self::CLIENT {
+        let (client, payload_receiver) =
+            WebsocketClient::<AggTradeStream>::new::<AggTradeStreamPayload>().await;
+        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
+            payload_receiver,
+        ));
+        tokio::spawn(agg_trade_payload_process(trade_stream, process));
+        AggTradeClient { websocket_client: client }
     }
 
-    pub async fn subscribe(&mut self, symbol: Symbol) {
+    async fn close(self) {
+        self.websocket_client.close().await;
+    }
+
+    async fn subscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .subscribe_single(AggTradeStream::new(symbol))
+            .subscribe_single(AggTradeStream::new(input))
             .await
             .unwrap();
     }
-    pub async fn subscribe_multi(&mut self, symbols: Vec<Symbol>) {
-        let params = symbols
+
+    async fn subscribe_items(&mut self, input: Vec<Self::INPUT>) {
+        let params = input
             .into_iter()
             .map(|item| AggTradeStream::new(item))
             .collect::<Vec<_>>();
@@ -35,14 +56,16 @@ impl AggTradeClient {
             .await
             .unwrap()
     }
-    pub async fn unsubscribe(&mut self, symbol: Symbol) {
+
+    async fn unsubscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .unsubscribe_single(AggTradeStream::new(symbol))
+            .unsubscribe_single(AggTradeStream::new(input))
             .await
             .unwrap();
     }
-    pub async fn unsubscribe_multi(&mut self, symbols: Vec<Symbol>) {
-        let params = symbols
+
+    async fn unsubscribe_items(&mut self, input: Vec<Self::INPUT>) {
+        let params = input
             .into_iter()
             .map(|symbol| AggTradeStream::new(symbol))
             .collect::<Vec<AggTradeStream>>();
@@ -51,8 +74,9 @@ impl AggTradeClient {
             .await
             .unwrap();
     }
-    pub async fn close(self) {
-        self.websocket_client.close().await;
+
+    fn get_subscribe_items(&self) -> Vec<Self::INPUT> {
+        self.websocket_client.get_all_subscribers().iter().map(|item|item.get_symbol().clone()).collect()
     }
 }
 
@@ -80,11 +104,11 @@ mod tests {
 
         let mut trade_client = BinanceMarketWebsocketClient::agg_trade().await;
 
-        trade_client.subscribe(Symbol::new("ARKUSDT")).await;
+        trade_client.subscribe_item(Symbol::new("ARKUSDT")).await;
 
         sleep(Duration::from_secs(15)).await;
 
-        trade_client.subscribe(Symbol::new("FILUSDT")).await;
+        trade_client.subscribe_item(Symbol::new("FILUSDT")).await;
 
         sleep(Duration::from_secs(20)).await;
 

@@ -21,6 +21,13 @@ impl SymbolRollingWindowStream {
     pub fn new(symbol: Symbol, window_size: WindowSize) -> Self {
         Self { symbol, window_size }
     }
+
+    pub fn get_symbol(&self) -> Symbol {
+        self.symbol.clone()
+    }
+    pub fn get_window_size(&self) -> WindowSize {
+        self.window_size.clone()
+    }
 }
 
 

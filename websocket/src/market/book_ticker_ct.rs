@@ -1,4 +1,5 @@
 use crate::market::types::symbol_book_ticker::{SymbolBookTickerPayload, SymbolBookTickerStream};
+use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
 use client::stream::stream::SocketPayloadProcess;
@@ -14,20 +15,39 @@ pub struct SymbolBookTickerClient {
     websocket_client: WebsocketClient<SymbolBookTickerStream>,
 }
 
-impl SymbolBookTickerClient {
-    pub fn new(websocket_client: WebsocketClient<SymbolBookTickerStream>) -> Self {
-        Self { websocket_client }
+impl<P> BinanceWebsocketAdaptor<P> for SymbolBookTickerClient
+where
+    P: SocketPayloadProcess<SymbolBookTickerPayload> + Send + 'static,
+{
+    type CLIENT = SymbolBookTickerClient;
+    type INPUT = Symbol;
+    type OUTPUT = SymbolBookTickerPayload;
+
+    async fn create_client(process: P) -> Self::CLIENT {
+        let (client, payload_receiver) =
+            WebsocketClient::<SymbolBookTickerStream>::new::<SymbolBookTickerPayload>().await;
+        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
+            payload_receiver,
+        ));
+        tokio::spawn(symbol_book_ticker_payload_process(trade_stream, process));
+        SymbolBookTickerClient {
+            websocket_client: client,
+        }
     }
 
-    pub async fn subscribe_symbol_book_ticker(&mut self, symbol: Symbol) {
+    async fn close(self) {
+        self.websocket_client.close().await
+    }
+
+    async fn subscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .subscribe_single(SymbolBookTickerStream::new(symbol))
+            .subscribe_single(SymbolBookTickerStream::new(input))
             .await
             .unwrap();
     }
 
-    pub async fn subscribe_symbol_book_ticker_multi(&mut self, params: Vec<Symbol>) {
-        let params = params
+    async fn subscribe_items(&mut self, input: Vec<Self::INPUT>) {
+        let params = input
             .into_iter()
             .map(|symbol| SymbolBookTickerStream::new(symbol))
             .collect::<Vec<_>>();
@@ -37,15 +57,15 @@ impl SymbolBookTickerClient {
             .unwrap()
     }
 
-    pub async fn unsubscribe_symbol_book_ticker(&mut self, symbol: Symbol) {
+    async fn unsubscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .unsubscribe_single(SymbolBookTickerStream::new(symbol))
+            .unsubscribe_single(SymbolBookTickerStream::new(input))
             .await
             .unwrap();
     }
 
-    pub async fn unsubscribe_symbol_book_ticker_multi(&mut self, symbols: Vec<Symbol>) {
-        let params = symbols
+    async fn unsubscribe_items(&mut self, input: Vec<Self::INPUT>) {
+        let params = input
             .into_iter()
             .map(|symbol| SymbolBookTickerStream::new(symbol))
             .collect::<Vec<_>>();
@@ -55,10 +75,15 @@ impl SymbolBookTickerClient {
             .unwrap();
     }
 
-    pub async fn close(self) {
-        self.websocket_client.close().await;
+    fn get_subscribe_items(&self) -> Vec<Self::INPUT> {
+        self.websocket_client
+            .get_all_subscribers()
+            .iter()
+            .map(|item| item.get_symbol())
+            .collect()
     }
 }
+
 pub(crate) async fn symbol_book_ticker_payload_process<P>(
     trade_response_stream: SymbolBookTickerResponseStream,
     mut processor: P,

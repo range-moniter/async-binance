@@ -1,8 +1,10 @@
 use crate::market::types::depth::{DepthStream, DepthStreamPayload};
+use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
 use client::stream::stream::SocketPayloadProcess;
 use futures_util::Stream;
+use general::enums::speed::Speed;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
@@ -14,22 +16,41 @@ pub struct DepthClient {
     websocket_client: WebsocketClient<DepthStream>,
 }
 
-impl DepthClient {
-    pub fn new(websocket_client: WebsocketClient<DepthStream>) -> Self {
-        Self { websocket_client }
+impl<P> BinanceWebsocketAdaptor<P> for DepthClient
+where
+    P: SocketPayloadProcess<DepthStreamPayload> + Send + 'static,
+{
+    type CLIENT = DepthClient;
+    type INPUT = (Symbol, Option<Speed>);
+    type OUTPUT = DepthStreamPayload;
+
+    async fn create_client(process: P) -> Self::CLIENT {
+        let (client, payload_receiver) =
+            WebsocketClient::<DepthStream>::new::<DepthStreamPayload>().await;
+        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
+            payload_receiver,
+        ));
+        tokio::spawn(depth_payload_process(trade_stream, process));
+        DepthClient {
+            websocket_client: client,
+        }
     }
 
-    pub async fn subscribe(&mut self, symbol: Symbol) {
+    async fn close(self) {
+        self.websocket_client.close().await
+    }
+
+    async fn subscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .subscribe_single(DepthStream::new(symbol))
+            .subscribe_single(DepthStream::new(input.0, input.1))
             .await
             .unwrap();
     }
 
-    pub async fn subscribe_multi(&mut self, params: Vec<Symbol>) {
-        let params = params
+    async fn subscribe_items(&mut self, input: Vec<Self::INPUT>) {
+        let params = input
             .into_iter()
-            .map(|symbol| DepthStream::new(symbol))
+            .map(|(symbol, speed)| DepthStream::new(symbol, speed))
             .collect::<Vec<_>>();
         self.websocket_client
             .subscribe_multiple(params)
@@ -37,17 +58,17 @@ impl DepthClient {
             .unwrap()
     }
 
-    pub async fn unsubscribe(&mut self, symbol: Symbol) {
+    async fn unsubscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .unsubscribe_single(DepthStream::new(symbol))
+            .unsubscribe_single(DepthStream::new(input.0, input.1))
             .await
             .unwrap();
     }
 
-    pub async fn unsubscribe_multi(&mut self, symbols: Vec<Symbol>) {
-        let params = symbols
+    async fn unsubscribe_items(&mut self, input: Vec<Self::INPUT>) {
+        let params = input
             .into_iter()
-            .map(|symbol| DepthStream::new(symbol))
+            .map(|(symbol, speed)| DepthStream::new(symbol, speed))
             .collect::<Vec<DepthStream>>();
         self.websocket_client
             .unsubscribe_multiple(params)
@@ -55,8 +76,12 @@ impl DepthClient {
             .unwrap();
     }
 
-    pub async fn close(self) {
-        self.websocket_client.close().await;
+    fn get_subscribe_items(&self) -> Vec<Self::INPUT> {
+        self.websocket_client
+            .get_all_subscribers()
+            .iter()
+            .map(|item| (item.get_symbol(), item.get_speed()))
+            .collect()
     }
 }
 
@@ -84,11 +109,11 @@ mod tests {
 
         let mut book_depth_client = BinanceMarketWebsocketClient::depth().await;
 
-        book_depth_client.subscribe(Symbol::new("ARKUSDT")).await;
+        book_depth_client.subscribe_item((Symbol::new("ARKUSDT"), None)).await;
 
         sleep(Duration::from_secs(15)).await;
 
-        book_depth_client.subscribe(Symbol::new("FILUSDT")).await;
+        book_depth_client.subscribe_item((Symbol::new("FILUSDT"), None)).await;
 
         sleep(Duration::from_secs(20)).await;
 

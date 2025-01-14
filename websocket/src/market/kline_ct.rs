@@ -1,9 +1,11 @@
 use crate::market::types::kline::{KlineStream, KlineStreamPayload};
+use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
 use client::stream::stream::SocketPayloadProcess;
 use futures_util::Stream;
 use general::enums::interval::Interval;
+use general::enums::timezone::Timezone;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
@@ -15,22 +17,41 @@ pub struct KlineClient {
     websocket_client: WebsocketClient<KlineStream>,
 }
 
-impl KlineClient {
-    pub fn new(websocket_client: WebsocketClient<KlineStream>) -> Self {
-        Self { websocket_client }
+impl<P> BinanceWebsocketAdaptor<P> for KlineClient
+where
+    P: SocketPayloadProcess<KlineStreamPayload> + Send + 'static,
+{
+    type CLIENT = KlineClient;
+    type INPUT = (Symbol, Interval, Option<Timezone>);
+    type OUTPUT = KlineStreamPayload;
+
+    async fn create_client(process: P) -> Self::CLIENT {
+        let (client, payload_receiver) =
+            WebsocketClient::<KlineStream>::new::<KlineStreamPayload>().await;
+        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
+            payload_receiver,
+        ));
+        tokio::spawn(kline_payload_process(trade_stream, process));
+        KlineClient {
+            websocket_client: client,
+        }
     }
 
-    pub async fn subscribe_kline(&mut self, symbol: Symbol, interval: Interval) {
+    async fn close(self) {
+        self.websocket_client.close().await
+    }
+
+    async fn subscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .subscribe_single(KlineStream::new(symbol, interval))
+            .subscribe_single(KlineStream::new(input.0, input.1, input.2))
             .await
             .unwrap();
     }
 
-    pub async fn subscribe_kline_multi(&mut self, params: Vec<(Symbol, Interval)>) {
-        let params = params
+    async fn subscribe_items(&mut self, input: Vec<Self::INPUT>) {
+        let params = input
             .into_iter()
-            .map(|(symbol, interval)| KlineStream::new(symbol, interval))
+            .map(|(symbol, interval, timezone)| KlineStream::new(symbol, interval, timezone))
             .collect::<Vec<_>>();
         self.websocket_client
             .subscribe_multiple(params)
@@ -38,24 +59,36 @@ impl KlineClient {
             .unwrap()
     }
 
-    pub async fn unsubscribe_kline(&mut self, symbol: Symbol, interval: Interval) {
+    async fn unsubscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .unsubscribe_single(KlineStream::new(symbol, interval))
+            .unsubscribe_single(KlineStream::new(input.0, input.1, input.2))
             .await
             .unwrap();
     }
-    pub async fn unsubscribe_kline_multi(&mut self, symbols: Vec<(Symbol, Interval)>) {
-        let params = symbols
+
+    async fn unsubscribe_items(&mut self, input: Vec<Self::INPUT>) {
+        let params = input
             .into_iter()
-            .map(|(symbol, interval)| KlineStream::new(symbol, interval))
+            .map(|(symbol, interval, timezone)| KlineStream::new(symbol, interval, timezone))
             .collect::<Vec<KlineStream>>();
         self.websocket_client
             .unsubscribe_multiple(params)
             .await
             .unwrap();
     }
-    pub async fn close(self) {
-        self.websocket_client.close().await;
+
+    fn get_subscribe_items(&self) -> Vec<Self::INPUT> {
+        self.websocket_client
+            .get_all_subscribers()
+            .iter()
+            .map(|item| {
+                (
+                    item.get_symbol(),
+                    item.get_kline_type(),
+                    item.get_timezone(),
+                )
+            })
+            .collect()
     }
 }
 
@@ -85,31 +118,14 @@ mod tests {
         let mut kline_client = BinanceMarketWebsocketClient::kline().await;
 
         kline_client
-            .subscribe_kline(Symbol::new("ARKUSDT"), Interval::Minute1)
+            .subscribe_item((Symbol::new("ARKUSDT"), Interval::Minute1, None))
             .await;
 
         sleep(Duration::from_secs(60)).await;
 
         kline_client
-            .subscribe_kline(Symbol::new("FILUSDT"), Interval::Second1)
+            .subscribe_item((Symbol::new("FILUSDT"), Interval::Second1, None))
             .await;
-
-        sleep(Duration::from_secs(100)).await;
-
-        kline_client
-            .subscribe_kline(Symbol::new("ETHUSDT"), Interval::Second1)
-            .await;
-
-        sleep(Duration::from_secs(50)).await;
-
-        kline_client
-            .unsubscribe_kline(Symbol::new("FILUSDT"), Interval::Second1)
-            .await;
-
-        sleep(Duration::from_secs(20)).await;
-
-        println!("send close message");
-
         kline_client.close().await;
 
         sleep(Duration::from_secs(200)).await;

@@ -7,6 +7,8 @@ use general::enums::level::Level;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
+use client::stream::adaptor::BinanceWebsocketAdaptor;
+use general::enums::speed::Speed;
 
 pub type BookDepthResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<BookDepthStreamPayload>>> + Send>>;
@@ -15,22 +17,36 @@ pub struct BookDepthClient {
     websocket_client: WebsocketClient<BookDepthStream>,
 }
 
-impl BookDepthClient {
-    pub fn new(websocket_client: WebsocketClient<BookDepthStream>) -> Self {
-        Self { websocket_client }
+impl<P> BinanceWebsocketAdaptor<P> for BookDepthClient where P: SocketPayloadProcess<BookDepthStreamPayload> + Send + 'static {
+    type CLIENT = BookDepthClient;
+    type INPUT = (Symbol, Level, Option<Speed>);
+    type OUTPUT = BookDepthStreamPayload;
+
+    async fn create_client(process: P) -> Self::CLIENT {
+        let (client, payload_receiver) =
+            WebsocketClient::<BookDepthStream>::new::<BookDepthStreamPayload>().await;
+        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
+            payload_receiver,
+        ));
+        tokio::spawn(book_depth_payload_process(trade_stream, process));
+        BookDepthClient { websocket_client: client }
     }
 
-    pub async fn subscribe(&mut self, symbol: Symbol, level: Level) {
+    async fn close(self) {
+        self.websocket_client.close().await
+    }
+
+    async fn subscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .subscribe_single(BookDepthStream::new(symbol, level))
+            .subscribe_single(BookDepthStream::new(input.0, input.1, input.2))
             .await
             .unwrap();
     }
 
-    pub async fn subscribe_multi(&mut self, params: Vec<(Symbol, Level)>) {
-        let params = params
+    async fn subscribe_items(&mut self, input: Vec<Self::INPUT>) {
+        let params = input
             .into_iter()
-            .map(|(symbol, level)| BookDepthStream::new(symbol, level))
+            .map(|(symbol, level, speed)| BookDepthStream::new(symbol, level, speed))
             .collect::<Vec<_>>();
         self.websocket_client
             .subscribe_multiple(params)
@@ -38,28 +54,28 @@ impl BookDepthClient {
             .unwrap()
     }
 
-    pub async fn unsubscribe(&mut self, symbol: Symbol, level: Level) {
+    async fn unsubscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .unsubscribe_single(BookDepthStream::new(symbol, level))
-            .await
-            .unwrap();
+        .unsubscribe_single(BookDepthStream::new(input.0, input.1, input.2))
+        .await
+        .unwrap();
     }
 
-    pub async fn unsubscribe_multi(&mut self, symbols: Vec<(Symbol, Level)>) {
-        let params = symbols
+    async fn unsubscribe_items(&mut self, input: Vec<Self::INPUT>) {
+        let params = input
             .into_iter()
-            .map(|(symbol, level)| BookDepthStream::new(symbol, level))
+            .map(|(symbol, level, speed)| BookDepthStream::new(symbol, level, speed))
             .collect::<Vec<BookDepthStream>>();
         self.websocket_client
             .unsubscribe_multiple(params)
             .await
             .unwrap();
     }
-    pub async fn close(self) {
-        self.websocket_client.close().await;
+
+    fn get_subscribe_items(&self) -> Vec<Self::INPUT> {
+        self.websocket_client.get_all_subscribers().iter().map(|item|(item.get_symbol(), item.get_level(), item.get_speed())).collect()
     }
 }
-
 pub(crate) async fn book_depth_payload_process<P>(
     trade_response_stream: BookDepthResponseStream,
     mut processor: P,
@@ -85,13 +101,13 @@ mod tests {
         let mut book_depth_client = BinanceMarketWebsocketClient::book_depth().await;
 
         book_depth_client
-            .subscribe(Symbol::new("ARKUSDT"), Level::L1)
+            .subscribe_item((Symbol::new("ARKUSDT"), Level::L1, None))
             .await;
 
         sleep(Duration::from_secs(15)).await;
 
         book_depth_client
-            .subscribe(Symbol::new("FILUSDT"), Level::L1)
+            .subscribe_item((Symbol::new("FILUSDT"), Level::L1, None))
             .await;
 
         sleep(Duration::from_secs(20)).await;

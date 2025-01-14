@@ -6,6 +6,7 @@ use futures_util::Stream;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
+use client::stream::adaptor::BinanceWebsocketAdaptor;
 
 pub type MiniTickerResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<SymbolMiniTickerPayload>>> + Send>>;
@@ -13,21 +14,34 @@ pub type MiniTickerResponseStream =
 pub struct SymbolMiniTickerClient {
     websocket_client: WebsocketClient<SymbolMiniTickerStream>,
 }
+impl<P> BinanceWebsocketAdaptor<P> for SymbolMiniTickerClient where P: SocketPayloadProcess<SymbolMiniTickerPayload> + Send +  'static {
+    type CLIENT = SymbolMiniTickerClient;
+    type INPUT = Symbol;
+    type OUTPUT = SymbolMiniTickerPayload;
 
-impl SymbolMiniTickerClient {
-    pub fn new(websocket_client: WebsocketClient<SymbolMiniTickerStream>) -> Self {
-        Self { websocket_client }
+    async fn create_client(process: P) -> Self::CLIENT {
+        let (client, payload_receiver) =
+            WebsocketClient::<SymbolMiniTickerStream>::new::<SymbolMiniTickerPayload>().await;
+        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
+            payload_receiver,
+        ));
+        tokio::spawn(symbol_mini_ticker_payload_process(trade_stream, process));
+        SymbolMiniTickerClient { websocket_client: client }
     }
 
-    pub async fn subscribe_mini_ticker(&mut self, symbol: Symbol) {
+    async fn close(self) {
+        self.websocket_client.close().await
+    }
+
+    async fn subscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .subscribe_single(SymbolMiniTickerStream::new(symbol))
+            .subscribe_single(SymbolMiniTickerStream::new(input))
             .await
             .unwrap();
     }
 
-    pub async fn subscribe_mini_ticker_multi(&mut self, params: Vec<Symbol>) {
-        let params = params
+    async fn subscribe_items(&mut self, input: Vec<Self::INPUT>) {
+        let params = input
             .into_iter()
             .map(|symbol| SymbolMiniTickerStream::new(symbol))
             .collect::<Vec<_>>();
@@ -37,15 +51,15 @@ impl SymbolMiniTickerClient {
             .unwrap()
     }
 
-    pub async fn unsubscribe_mini_ticker(&mut self, symbol: Symbol) {
+    async fn unsubscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .unsubscribe_single(SymbolMiniTickerStream::new(symbol))
+            .unsubscribe_single(SymbolMiniTickerStream::new(input))
             .await
             .unwrap();
     }
 
-    pub async fn unsubscribe_mini_ticker_multi(&mut self, symbols: Vec<Symbol>) {
-        let params = symbols
+    async fn unsubscribe_items(&mut self, input: Vec<Self::INPUT>) {
+        let params = input
             .into_iter()
             .map(|symbol| SymbolMiniTickerStream::new(symbol))
             .collect::<Vec<_>>();
@@ -55,10 +69,11 @@ impl SymbolMiniTickerClient {
             .unwrap();
     }
 
-    pub async fn close(self) {
-        self.websocket_client.close().await;
+    fn get_subscribe_items(&self) -> Vec<Self::INPUT> {
+        self.websocket_client.get_all_subscribers().iter().map(|item|item.get_symbol()).collect()
     }
 }
+
 pub(crate) async fn symbol_mini_ticker_payload_process<P>(
     trade_response_stream: MiniTickerResponseStream,
     mut processor: P,
@@ -86,19 +101,19 @@ mod tests {
             BinanceMarketWebsocketClient::symbol_mini_ticker().await;
 
         symbol_mini_ticker_client
-            .subscribe_mini_ticker(Symbol::new("ARKUSDT"))
+            .subscribe_item(Symbol::new("ARKUSDT"))
             .await;
 
         sleep(Duration::from_secs(15)).await;
 
         symbol_mini_ticker_client
-            .subscribe_mini_ticker(Symbol::new("FILUSDT"))
+            .subscribe_item(Symbol::new("FILUSDT"))
             .await;
 
         sleep(Duration::from_secs(20)).await;
 
         symbol_mini_ticker_client
-            .unsubscribe_mini_ticker(Symbol::new("FILUSDT"))
+            .subscribe_item(Symbol::new("FILUSDT"))
             .await;
 
         sleep(Duration::from_secs(20)).await;
