@@ -130,7 +130,7 @@ impl BinanceMarketWebsocketClient {
     where
         P: SocketPayloadProcess<SymbolRollingPayload> + Send + 'static,
     {
-        SymbolRollingClient::create_client(process)
+        SymbolRollingClient::create_client(process).await
     }
 
     pub async fn symbol_ticker() -> SymbolTickerClient {

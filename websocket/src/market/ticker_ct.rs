@@ -1,4 +1,6 @@
 use crate::market::types::symbol_ticker::{SymbolTickerPayload, SymbolTickerStream};
+use async_trait::async_trait;
+use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
 use client::stream::stream::SocketPayloadProcess;
@@ -6,7 +8,6 @@ use futures_util::Stream;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
-use client::stream::adaptor::BinanceWebsocketAdaptor;
 
 pub type SymbolTickerResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<SymbolTickerPayload>>> + Send>>;
@@ -14,7 +15,11 @@ pub type SymbolTickerResponseStream =
 pub struct SymbolTickerClient {
     websocket_client: WebsocketClient<SymbolTickerStream>,
 }
-impl <P> BinanceWebsocketAdaptor<P> for SymbolTickerClient where P: SocketPayloadProcess<SymbolTickerPayload> + Send + 'static {
+#[async_trait]
+impl<P> BinanceWebsocketAdaptor<P> for SymbolTickerClient
+where
+    P: SocketPayloadProcess<SymbolTickerPayload> + Send + 'static,
+{
     type CLIENT = SymbolTickerClient;
     type INPUT = Symbol;
     type OUTPUT = SymbolTickerPayload;
@@ -26,7 +31,9 @@ impl <P> BinanceWebsocketAdaptor<P> for SymbolTickerClient where P: SocketPayloa
             payload_receiver,
         ));
         tokio::spawn(symbol_ticker_payload_process(trade_stream, process));
-        SymbolTickerClient { websocket_client: client }
+        SymbolTickerClient {
+            websocket_client: client,
+        }
     }
 
     async fn close(self) {
@@ -70,7 +77,11 @@ impl <P> BinanceWebsocketAdaptor<P> for SymbolTickerClient where P: SocketPayloa
     }
 
     fn get_subscribe_items(&self) -> Vec<Self::INPUT> {
-        self.websocket_client.get_all_subscribers().iter().map(|item|item.get_symbol()).collect();
+        self.websocket_client
+            .get_all_subscribers()
+            .iter()
+            .map(|item| item.get_symbol())
+            .collect()
     }
 }
 pub(crate) async fn symbol_ticker_payload_process<P>(

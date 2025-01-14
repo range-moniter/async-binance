@@ -8,6 +8,7 @@ use general::enums::speed::Speed;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
+use async_trait::async_trait;
 
 pub type DepthResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<DepthStreamPayload>>> + Send>>;
@@ -15,7 +16,7 @@ pub type DepthResponseStream =
 pub struct DepthClient {
     websocket_client: WebsocketClient<DepthStream>,
 }
-
+#[async_trait]
 impl<P> BinanceWebsocketAdaptor<P> for DepthClient
 where
     P: SocketPayloadProcess<DepthStreamPayload> + Send + 'static,

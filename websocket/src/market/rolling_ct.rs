@@ -8,6 +8,7 @@ use general::enums::window_size::WindowSize;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
+use async_trait::async_trait;
 
 pub type SymbolRollingResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<SymbolRollingPayload>>> + Send>>;
@@ -15,6 +16,7 @@ pub type SymbolRollingResponseStream =
 pub struct SymbolRollingClient {
     websocket_client: WebsocketClient<SymbolRollingWindowStream>,
 }
+#[async_trait]
 impl<P> BinanceWebsocketAdaptor<P> for SymbolRollingClient
 where
     P: SocketPayloadProcess<SymbolRollingPayload> + 'static + Send,

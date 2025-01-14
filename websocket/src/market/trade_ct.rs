@@ -1,4 +1,6 @@
 use crate::market::types::trade::{TradeStream, TradeStreamPayload};
+use async_trait::async_trait;
+use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
 use client::stream::stream::SocketPayloadProcess;
@@ -6,7 +8,6 @@ use futures_util::Stream;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
-use client::stream::adaptor::BinanceWebsocketAdaptor;
 
 pub type TradeResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<TradeStreamPayload>>> + Send>>;
@@ -14,8 +15,11 @@ pub type TradeResponseStream =
 pub struct TradeClient {
     websocket_client: WebsocketClient<TradeStream>,
 }
-
-impl<P> BinanceWebsocketAdaptor<P> for TradeClient where P: SocketPayloadProcess<TradeStreamPayload> + Send + 'static{
+#[async_trait]
+impl<P> BinanceWebsocketAdaptor<P> for TradeClient
+where
+    P: SocketPayloadProcess<TradeStreamPayload> + Send + 'static,
+{
     type CLIENT = TradeClient;
     type INPUT = Symbol;
     type OUTPUT = TradeStreamPayload;
@@ -73,7 +77,11 @@ impl<P> BinanceWebsocketAdaptor<P> for TradeClient where P: SocketPayloadProcess
     }
 
     fn get_subscribe_items(&self) -> Vec<Self::INPUT> {
-        self.websocket_client.get_all_subscribers().iter().map(|item|item.get_symbol()).collect()
+        self.websocket_client
+            .get_all_subscribers()
+            .iter()
+            .map(|item| item.get_symbol())
+            .collect()
     }
 }
 

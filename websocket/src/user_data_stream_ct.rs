@@ -1,9 +1,8 @@
+use client::stream::adaptor::BinanceWebsocketAdaptor;
 use crate::userdata::types::event_type::UserDataEventPayload;
-use crate::userdata::user_data_socket::{user_data_payload_process, UserDataClient};
-use client::stream::client::WebsocketClient;
 use client::stream::payload::default_payload_output_func;
 use client::stream::stream::{DefaultStreamPayloadProcess, SocketPayloadProcess};
-use crate::userdata::types::listen_key::UserDataStream;
+use crate::userdata::user_data_socket::UserDataClient;
 
 pub struct BinanceUserdataWebsocketClient;
 
@@ -17,12 +16,7 @@ impl BinanceUserdataWebsocketClient {
     where
         P: SocketPayloadProcess<UserDataEventPayload> + Send + 'static,
     {
-        let (client, payload_receiver) =
-            WebsocketClient::<UserDataStream>::new::<UserDataEventPayload>().await;
-        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
-            payload_receiver,
-        ));
-        tokio::spawn(user_data_payload_process(trade_stream, process));
-        UserDataClient::new(client)
+
+        UserDataClient::create_client(process).await
     }
 }

@@ -1,14 +1,15 @@
 use crate::market::types::book_depth::{BookDepthStream, BookDepthStreamPayload};
+use async_trait::async_trait;
+use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
 use client::stream::stream::SocketPayloadProcess;
 use futures_util::Stream;
 use general::enums::level::Level;
+use general::enums::speed::Speed;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
-use client::stream::adaptor::BinanceWebsocketAdaptor;
-use general::enums::speed::Speed;
 
 pub type BookDepthResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<BookDepthStreamPayload>>> + Send>>;
@@ -16,8 +17,11 @@ pub type BookDepthResponseStream =
 pub struct BookDepthClient {
     websocket_client: WebsocketClient<BookDepthStream>,
 }
-
-impl<P> BinanceWebsocketAdaptor<P> for BookDepthClient where P: SocketPayloadProcess<BookDepthStreamPayload> + Send + 'static {
+#[async_trait]
+impl<P> BinanceWebsocketAdaptor<P> for BookDepthClient
+where
+    P: SocketPayloadProcess<BookDepthStreamPayload> + Send + 'static,
+{
     type CLIENT = BookDepthClient;
     type INPUT = (Symbol, Level, Option<Speed>);
     type OUTPUT = BookDepthStreamPayload;
@@ -29,7 +33,9 @@ impl<P> BinanceWebsocketAdaptor<P> for BookDepthClient where P: SocketPayloadPro
             payload_receiver,
         ));
         tokio::spawn(book_depth_payload_process(trade_stream, process));
-        BookDepthClient { websocket_client: client }
+        BookDepthClient {
+            websocket_client: client,
+        }
     }
 
     async fn close(self) {
@@ -56,9 +62,9 @@ impl<P> BinanceWebsocketAdaptor<P> for BookDepthClient where P: SocketPayloadPro
 
     async fn unsubscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-        .unsubscribe_single(BookDepthStream::new(input.0, input.1, input.2))
-        .await
-        .unwrap();
+            .unsubscribe_single(BookDepthStream::new(input.0, input.1, input.2))
+            .await
+            .unwrap();
     }
 
     async fn unsubscribe_items(&mut self, input: Vec<Self::INPUT>) {
@@ -73,7 +79,11 @@ impl<P> BinanceWebsocketAdaptor<P> for BookDepthClient where P: SocketPayloadPro
     }
 
     fn get_subscribe_items(&self) -> Vec<Self::INPUT> {
-        self.websocket_client.get_all_subscribers().iter().map(|item|(item.get_symbol(), item.get_level(), item.get_speed())).collect()
+        self.websocket_client
+            .get_all_subscribers()
+            .iter()
+            .map(|item| (item.get_symbol(), item.get_level(), item.get_speed()))
+            .collect()
     }
 }
 pub(crate) async fn book_depth_payload_process<P>(

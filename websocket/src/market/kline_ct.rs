@@ -9,6 +9,7 @@ use general::enums::timezone::Timezone;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
+use async_trait::async_trait;
 
 pub type KlineResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<KlineStreamPayload>>> + Send>>;
@@ -16,7 +17,7 @@ pub type KlineResponseStream =
 pub struct KlineClient {
     websocket_client: WebsocketClient<KlineStream>,
 }
-
+#[async_trait]
 impl<P> BinanceWebsocketAdaptor<P> for KlineClient
 where
     P: SocketPayloadProcess<KlineStreamPayload> + Send + 'static,

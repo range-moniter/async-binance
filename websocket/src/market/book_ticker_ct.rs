@@ -7,6 +7,7 @@ use futures_util::Stream;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
+use async_trait::async_trait;
 
 pub type SymbolBookTickerResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<SymbolBookTickerPayload>>> + Send>>;
@@ -14,7 +15,7 @@ pub type SymbolBookTickerResponseStream =
 pub struct SymbolBookTickerClient {
     websocket_client: WebsocketClient<SymbolBookTickerStream>,
 }
-
+#[async_trait]
 impl<P> BinanceWebsocketAdaptor<P> for SymbolBookTickerClient
 where
     P: SocketPayloadProcess<SymbolBookTickerPayload> + Send + 'static,

@@ -1,4 +1,6 @@
 use crate::market::types::symbol_mini_ticker::{SymbolMiniTickerPayload, SymbolMiniTickerStream};
+use async_trait::async_trait;
+use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
 use client::stream::stream::SocketPayloadProcess;
@@ -6,7 +8,6 @@ use futures_util::Stream;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
-use client::stream::adaptor::BinanceWebsocketAdaptor;
 
 pub type MiniTickerResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<SymbolMiniTickerPayload>>> + Send>>;
@@ -14,7 +15,11 @@ pub type MiniTickerResponseStream =
 pub struct SymbolMiniTickerClient {
     websocket_client: WebsocketClient<SymbolMiniTickerStream>,
 }
-impl<P> BinanceWebsocketAdaptor<P> for SymbolMiniTickerClient where P: SocketPayloadProcess<SymbolMiniTickerPayload> + Send +  'static {
+#[async_trait]
+impl<P> BinanceWebsocketAdaptor<P> for SymbolMiniTickerClient
+where
+    P: SocketPayloadProcess<SymbolMiniTickerPayload> + Send + 'static,
+{
     type CLIENT = SymbolMiniTickerClient;
     type INPUT = Symbol;
     type OUTPUT = SymbolMiniTickerPayload;
@@ -26,7 +31,9 @@ impl<P> BinanceWebsocketAdaptor<P> for SymbolMiniTickerClient where P: SocketPay
             payload_receiver,
         ));
         tokio::spawn(symbol_mini_ticker_payload_process(trade_stream, process));
-        SymbolMiniTickerClient { websocket_client: client }
+        SymbolMiniTickerClient {
+            websocket_client: client,
+        }
     }
 
     async fn close(self) {
@@ -70,7 +77,11 @@ impl<P> BinanceWebsocketAdaptor<P> for SymbolMiniTickerClient where P: SocketPay
     }
 
     fn get_subscribe_items(&self) -> Vec<Self::INPUT> {
-        self.websocket_client.get_all_subscribers().iter().map(|item|item.get_symbol()).collect()
+        self.websocket_client
+            .get_all_subscribers()
+            .iter()
+            .map(|item| item.get_symbol())
+            .collect()
     }
 }
 
