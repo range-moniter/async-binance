@@ -47,35 +47,33 @@
 ## Websocket
 
 ```rust
+    use super::*;
+use crate::market_socket_ct::BinanceMarketWebsocketClient;
+use client::stream::stream::DefaultStreamPayloadProcess;
+use env_logger::Builder;
 use std::time::Duration;
 use tokio::time::sleep;
-use env_logger::Builder;
-use crate::market_socket_ct::BinanceMarketWebsocketClient;
 
-
-#[tokio::main]
-async fn main() {
+#[tokio::test]
+async fn test_trade() {
     Builder::from_default_env()
-        .filter(None, log::LevelFilter::Debug)
+        .filter(None, log::LevelFilter::Info)
         .init();
-    
-    
-    // build book_depth client,
-    let mut book_depth_client = BinanceMarketWebsocketClient::book_depth().await;
-    
-    // subscribe ARKUSDT socket 
-    book_depth_client.subscribe(Symbol::new("ARKUSDT"),Level::L1).await;
 
-    sleep(Duration::from_secs(15)).await;
-    book_depth_client.subscribe(Symbol::new("FILUSDT"), Level::L1).await;
+    let process = DefaultStreamPayloadProcess::<TradeStreamPayload>::new();
 
-    sleep(Duration::from_secs(20)).await;
+    let mut trade_client = BinanceMarketWebsocketClient::trade(process).await;
+
+    trade_client.subscribe_item(Symbol::new("ETHUSDT")).await;
+
+    sleep(Duration::from_secs(5)).await;
 
     println!("send close message");
 
-    book_depth_client.close().await;
+    trade_client.close().await;
 
-    sleep(Duration::from_secs(200)).await;
+    println!("client close message");
+    sleep(Duration::from_millis(1000000)).await;
 }
 ```
 
