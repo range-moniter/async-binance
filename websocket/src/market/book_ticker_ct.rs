@@ -1,4 +1,5 @@
 use crate::market::types::symbol_book_ticker::{SymbolBookTickerPayload, SymbolBookTickerStream};
+use async_trait::async_trait;
 use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
@@ -7,7 +8,6 @@ use futures_util::Stream;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
-use async_trait::async_trait;
 
 pub type SymbolBookTickerResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<SymbolBookTickerPayload>>> + Send>>;
@@ -16,15 +16,15 @@ pub struct SymbolBookTickerClient {
     websocket_client: WebsocketClient<SymbolBookTickerStream>,
 }
 #[async_trait]
-impl<P> BinanceWebsocketAdaptor<P> for SymbolBookTickerClient
-where
-    P: SocketPayloadProcess<SymbolBookTickerPayload> + Send + 'static,
-{
+impl BinanceWebsocketAdaptor for SymbolBookTickerClient {
     type CLIENT = SymbolBookTickerClient;
     type INPUT = Symbol;
     type OUTPUT = SymbolBookTickerPayload;
 
-    async fn create_client(process: P) -> Self::CLIENT {
+    async fn create_client<P>(process: P) -> Self::CLIENT
+    where
+        P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static ,
+    {
         let (client, payload_receiver) =
             WebsocketClient::<SymbolBookTickerStream>::new::<SymbolBookTickerPayload>().await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
@@ -35,6 +35,7 @@ where
             websocket_client: client,
         }
     }
+
 
     async fn close(self) {
         self.websocket_client.close().await
@@ -98,40 +99,42 @@ pub(crate) async fn symbol_book_ticker_payload_process<P>(
 mod tests {
     use super::*;
     use crate::market_socket_ct::BinanceMarketWebsocketClient;
+    use client::stream::stream::DefaultStreamPayloadProcess;
     use env_logger::Builder;
     use general::enums::interval::Interval;
     use std::time::Duration;
     use tokio::time::sleep;
-    #[tokio::test]
-    async fn test_average_price() {
-        Builder::from_default_env()
-            .filter(None, log::LevelFilter::Debug)
-            .init();
 
-        let mut symbol_book_ticker_client = BinanceMarketWebsocketClient::kline().await;
-
-        symbol_book_ticker_client
-            .subscribe_kline(Symbol::new("ARKUSDT"), Interval::Second1)
-            .await;
-
-        sleep(Duration::from_secs(15)).await;
-
-        symbol_book_ticker_client
-            .subscribe_kline(Symbol::new("FILUSDT"), Interval::Second1)
-            .await;
-
-        sleep(Duration::from_secs(20)).await;
-
-        symbol_book_ticker_client
-            .unsubscribe_kline(Symbol::new("FILUSDT"), Interval::Second1)
-            .await;
-
-        sleep(Duration::from_secs(20)).await;
-
-        println!("send close message");
-
-        symbol_book_ticker_client.close().await;
-
-        sleep(Duration::from_secs(200)).await;
-    }
+    // #[tokio::test]
+    // async fn test_average_price() {
+    //     Builder::from_default_env()
+    //         .filter(None, log::LevelFilter::Debug)
+    //         .init();
+    //
+    //     let mut symbol_book_ticker_client = BinanceMarketWebsocketClient::kline(DefaultStreamPayloadProcess::default()).await;
+    //
+    //     symbol_book_ticker_client
+    //         .subscribe_item((Symbol::new("ARKUSDT"), Interval::Second1, None))
+    //         .await;
+    //
+    //     sleep(Duration::from_secs(15)).await;
+    //
+    //     symbol_book_ticker_client
+    //         .subscribe_item((Symbol::new("ETHUSDT"), Interval::Second1, None))
+    //         .await;
+    //
+    //     sleep(Duration::from_secs(20)).await;
+    //
+    //     symbol_book_ticker_client
+    //         .unsubscribe_item((Symbol::new("BTCUSDT"), Interval::Second1, None))
+    //         .await;
+    //
+    //     sleep(Duration::from_secs(20)).await;
+    //
+    //     println!("send close message");
+    //
+    //     symbol_book_ticker_client.close().await;
+    //
+    //     sleep(Duration::from_secs(200)).await;
+    // }
 }

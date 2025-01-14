@@ -1,12 +1,14 @@
-use async_trait::async_trait;
 use crate::stream::stream::SocketPayloadProcess;
+use async_trait::async_trait;
 
 #[async_trait]
-pub trait BinanceWebsocketAdaptor<P: SocketPayloadProcess<Self::OUTPUT>> {
+pub trait BinanceWebsocketAdaptor {
     type CLIENT;
     type INPUT;
     type OUTPUT;
-    async fn create_client(process: P) -> Self::CLIENT;
+    async fn create_client<P>(process: P) -> Self::CLIENT
+    where
+        P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static ;
     async fn close(self);
     async fn subscribe_item(&mut self, input: Self::INPUT);
     async fn subscribe_items(&mut self, input: Vec<Self::INPUT>);

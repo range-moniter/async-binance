@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
-use client::stream::stream::SocketPayloadProcess;
+use client::stream::stream::{DefaultStreamPayloadProcess, SocketPayloadProcess};
 use futures_util::Stream;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
@@ -16,15 +16,16 @@ pub struct TradeClient {
     websocket_client: WebsocketClient<TradeStream>,
 }
 #[async_trait]
-impl<P> BinanceWebsocketAdaptor<P> for TradeClient
-where
-    P: SocketPayloadProcess<TradeStreamPayload> + Send + 'static,
+impl BinanceWebsocketAdaptor for TradeClient
 {
     type CLIENT = TradeClient;
     type INPUT = Symbol;
     type OUTPUT = TradeStreamPayload;
 
-    async fn create_client(process: P) -> Self::CLIENT {
+    async fn create_client<P>(process: P) -> Self::CLIENT
+    where
+        P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static ,
+    {
         let (client, payload_receiver) =
             WebsocketClient::<TradeStream>::new::<TradeStreamPayload>().await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
@@ -98,25 +99,30 @@ pub(crate) async fn trade_payload_process<P>(
 mod tests {
     use super::*;
     use crate::market_socket_ct::BinanceMarketWebsocketClient;
+    use client::stream::stream::DefaultStreamPayloadProcess;
     use env_logger::Builder;
     use std::time::Duration;
     use tokio::time::sleep;
+
     #[tokio::test]
     async fn test_trade() {
         Builder::from_default_env()
-            .filter(None, log::LevelFilter::Debug)
+            .filter(None, log::LevelFilter::Info)
             .init();
 
-        let mut trade_client = BinanceMarketWebsocketClient::trade().await;
+        let process = DefaultStreamPayloadProcess::<TradeStreamPayload>::new();
 
-        trade_client.subscribe_item(Symbol::new("ARKUSDT")).await;
+        let mut trade_client = BinanceMarketWebsocketClient::trade(process).await;
 
-        sleep(Duration::from_secs(20)).await;
+        trade_client.subscribe_item(Symbol::new("ETHUSDT")).await;
+
+        sleep(Duration::from_secs(5)).await;
 
         println!("send close message");
 
         trade_client.close().await;
 
+        println!("client close message");
         sleep(Duration::from_millis(1000000)).await;
     }
 }

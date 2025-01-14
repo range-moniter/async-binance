@@ -19,12 +19,21 @@ pub trait SocketPayloadProcess<I> {
     );
 }
 
-#[derive(Debug, Default)]
-pub struct DefaultStreamPayloadProcess;
+#[derive(Debug)]
+pub struct DefaultStreamPayloadProcess<I>{
+    _phantom: PhantomData<I>,
+}
 
+impl<I> DefaultStreamPayloadProcess<I> {
+    pub fn new() -> Self{
+        DefaultStreamPayloadProcess {
+            _phantom: PhantomData,
+        }
+    }
+}
 
 #[async_trait]
-impl<I> SocketPayloadProcess<I> for DefaultStreamPayloadProcess
+impl<I> SocketPayloadProcess<I> for DefaultStreamPayloadProcess<I>
 where
     I: DeserializeOwned + Send + Debug + 'static,
 {

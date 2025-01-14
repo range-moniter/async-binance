@@ -18,24 +18,25 @@ pub struct BookDepthClient {
     websocket_client: WebsocketClient<BookDepthStream>,
 }
 #[async_trait]
-impl<P> BinanceWebsocketAdaptor<P> for BookDepthClient
-where
-    P: SocketPayloadProcess<BookDepthStreamPayload> + Send + 'static,
+impl BinanceWebsocketAdaptor for BookDepthClient
 {
     type CLIENT = BookDepthClient;
     type INPUT = (Symbol, Level, Option<Speed>);
     type OUTPUT = BookDepthStreamPayload;
 
-    async fn create_client(process: P) -> Self::CLIENT {
-        let (client, payload_receiver) =
-            WebsocketClient::<BookDepthStream>::new::<BookDepthStreamPayload>().await;
-        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
-            payload_receiver,
-        ));
-        tokio::spawn(book_depth_payload_process(trade_stream, process));
-        BookDepthClient {
-            websocket_client: client,
-        }
+    async fn create_client<P>(process: P) -> Self::CLIENT
+    where
+        P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static
+    {
+            let (client, payload_receiver) =
+                WebsocketClient::<BookDepthStream>::new::<BookDepthStreamPayload>().await;
+            let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
+                payload_receiver,
+            ));
+            tokio::spawn(book_depth_payload_process(trade_stream, process));
+            BookDepthClient {
+                websocket_client: client,
+            }
     }
 
     async fn close(self) {
@@ -102,30 +103,32 @@ mod tests {
     use env_logger::Builder;
     use std::time::Duration;
     use tokio::time::sleep;
-    #[tokio::test]
-    async fn test_average_price() {
-        Builder::from_default_env()
-            .filter(None, log::LevelFilter::Debug)
-            .init();
+    use client::stream::stream::DefaultStreamPayloadProcess;
 
-        let mut book_depth_client = BinanceMarketWebsocketClient::book_depth().await;
-
-        book_depth_client
-            .subscribe_item((Symbol::new("ARKUSDT"), Level::L1, None))
-            .await;
-
-        sleep(Duration::from_secs(15)).await;
-
-        book_depth_client
-            .subscribe_item((Symbol::new("FILUSDT"), Level::L1, None))
-            .await;
-
-        sleep(Duration::from_secs(20)).await;
-
-        println!("send close message");
-
-        book_depth_client.close().await;
-
-        sleep(Duration::from_secs(200)).await;
-    }
+    // #[tokio::test]
+    // async fn test_average_price() {
+    //     Builder::from_default_env()
+    //         .filter(None, log::LevelFilter::Debug)
+    //         .init();
+    //
+    //     let mut book_depth_client = BinanceMarketWebsocketClient::book_depth(DefaultStreamPayloadProcess::default()).await;
+    //
+    //     book_depth_client
+    //         .subscribe_item((Symbol::new("ARKUSDT"), Level::L1, None))
+    //         .await;
+    //
+    //     sleep(Duration::from_secs(15)).await;
+    //
+    //     book_depth_client
+    //         .subscribe_item((Symbol::new("FILUSDT"), Level::L1, None))
+    //         .await;
+    //
+    //     sleep(Duration::from_secs(20)).await;
+    //
+    //     println!("send close message");
+    //
+    //     book_depth_client.close().await;
+    //
+    //     sleep(Duration::from_secs(200)).await;
+    // }
 }

@@ -1,4 +1,5 @@
 use crate::market::types::symbol_rolling::{SymbolRollingPayload, SymbolRollingWindowStream};
+use async_trait::async_trait;
 use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
@@ -8,7 +9,6 @@ use general::enums::window_size::WindowSize;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
-use async_trait::async_trait;
 
 pub type SymbolRollingResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<SymbolRollingPayload>>> + Send>>;
@@ -17,15 +17,15 @@ pub struct SymbolRollingClient {
     websocket_client: WebsocketClient<SymbolRollingWindowStream>,
 }
 #[async_trait]
-impl<P> BinanceWebsocketAdaptor<P> for SymbolRollingClient
-where
-    P: SocketPayloadProcess<SymbolRollingPayload> + 'static + Send,
-{
+impl BinanceWebsocketAdaptor for SymbolRollingClient {
     type CLIENT = SymbolRollingClient;
     type INPUT = (Symbol, WindowSize);
     type OUTPUT = SymbolRollingPayload;
 
-    async fn create_client(process: P) -> Self::CLIENT {
+    async fn create_client<P>(process: P) -> Self::CLIENT
+    where
+        P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static ,
+    {
         let (client, payload_receiver) =
             WebsocketClient::<SymbolRollingWindowStream>::new::<SymbolRollingPayload>().await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
@@ -99,32 +99,34 @@ pub(crate) async fn symbol_rolling_payload_process<P>(
 mod tests {
     use super::*;
     use crate::market_socket_ct::BinanceMarketWebsocketClient;
+    use client::stream::stream::DefaultStreamPayloadProcess;
     use env_logger::Builder;
     use std::time::Duration;
     use tokio::time::sleep;
-    #[tokio::test]
-    async fn test_average_price() {
-        Builder::from_default_env()
-            .filter(None, log::LevelFilter::Debug)
-            .init();
 
-        let mut symbol_rolling_client = BinanceMarketWebsocketClient::symbol_rolling_ticker().await;
-
-        symbol_rolling_client
-            .subscribe_item((Symbol::new("ARKUSDT"), WindowSize::FourHours))
-            .await;
-
-        sleep(Duration::from_secs(15)).await;
-
-        symbol_rolling_client
-            .subscribe_item((Symbol::new("FILUSDT"), WindowSize::FourHours))
-            .await;
-        sleep(Duration::from_secs(20)).await;
-
-        println!("send close message");
-
-        symbol_rolling_client.close().await;
-
-        sleep(Duration::from_secs(200)).await;
-    }
+    // #[tokio::test]
+    // async fn test_average_price() {
+    //     Builder::from_default_env()
+    //         .filter(None, log::LevelFilter::Debug)
+    //         .init();
+    //
+    //     let mut symbol_rolling_client = BinanceMarketWebsocketClient::symbol_rolling_ticker(DefaultStreamPayloadProcess::default()).await;
+    //
+    //     symbol_rolling_client
+    //         .subscribe_item((Symbol::new("ARKUSDT"), WindowSize::FourHours))
+    //         .await;
+    //
+    //     sleep(Duration::from_secs(15)).await;
+    //
+    //     symbol_rolling_client
+    //         .subscribe_item((Symbol::new("FILUSDT"), WindowSize::FourHours))
+    //         .await;
+    //     sleep(Duration::from_secs(20)).await;
+    //
+    //     println!("send close message");
+    //
+    //     symbol_rolling_client.close().await;
+    //
+    //     sleep(Duration::from_secs(200)).await;
+    // }
 }

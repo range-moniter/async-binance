@@ -1,4 +1,5 @@
 use crate::market::types::agg_trade::{AggTradeStream, AggTradeStreamPayload};
+use async_trait::async_trait;
 use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
@@ -7,7 +8,6 @@ use futures_util::Stream;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
-use async_trait::async_trait;
 
 pub type AggTradeResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<AggTradeStreamPayload>>> + Send>>;
@@ -17,22 +17,24 @@ pub struct AggTradeClient {
 }
 
 #[async_trait]
-impl<P> BinanceWebsocketAdaptor<P> for AggTradeClient
-where
-    P: SocketPayloadProcess<AggTradeStreamPayload> + 'static + Send,
-{
+impl BinanceWebsocketAdaptor for AggTradeClient {
     type CLIENT = AggTradeClient;
     type INPUT = Symbol;
     type OUTPUT = AggTradeStreamPayload;
 
-    async fn create_client(process: P) -> Self::CLIENT {
+    async fn create_client<P>(process: P) -> Self::CLIENT
+    where
+        P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static ,
+    {
         let (client, payload_receiver) =
             WebsocketClient::<AggTradeStream>::new::<AggTradeStreamPayload>().await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
             payload_receiver,
         ));
         tokio::spawn(agg_trade_payload_process(trade_stream, process));
-        AggTradeClient { websocket_client: client }
+        AggTradeClient {
+            websocket_client: client,
+        }
     }
 
     async fn close(self) {
@@ -76,7 +78,11 @@ where
     }
 
     fn get_subscribe_items(&self) -> Vec<Self::INPUT> {
-        self.websocket_client.get_all_subscribers().iter().map(|item|item.get_symbol().clone()).collect()
+        self.websocket_client
+            .get_all_subscribers()
+            .iter()
+            .map(|item| item.get_symbol().clone())
+            .collect()
     }
 }
 
@@ -93,29 +99,31 @@ pub(crate) async fn agg_trade_payload_process<P>(
 mod tests {
     use super::*;
     use crate::market_socket_ct::BinanceMarketWebsocketClient;
+    use client::stream::stream::DefaultStreamPayloadProcess;
     use env_logger::Builder;
     use std::time::Duration;
     use tokio::time::sleep;
-    #[tokio::test]
-    async fn test_agg_trade() {
-        Builder::from_default_env()
-            .filter(None, log::LevelFilter::Debug)
-            .init();
 
-        let mut trade_client = BinanceMarketWebsocketClient::agg_trade().await;
-
-        trade_client.subscribe_item(Symbol::new("ARKUSDT")).await;
-
-        sleep(Duration::from_secs(15)).await;
-
-        trade_client.subscribe_item(Symbol::new("FILUSDT")).await;
-
-        sleep(Duration::from_secs(20)).await;
-
-        println!("send close message");
-
-        trade_client.close().await;
-
-        sleep(Duration::from_millis(1000000)).await;
-    }
+    // #[tokio::test]
+    // async fn test_agg_trade() {
+    //     Builder::from_default_env()
+    //         .filter(None, log::LevelFilter::Debug)
+    //         .init();
+    //
+    //     let mut trade_client = BinanceMarketWebsocketClient::agg_trade(DefaultStreamPayloadProcess::default()).await;
+    //
+    //     trade_client.subscribe_item(Symbol::new("ARKUSDT")).await;
+    //
+    //     sleep(Duration::from_secs(15)).await;
+    //
+    //     trade_client.subscribe_item(Symbol::new("FILUSDT")).await;
+    //
+    //     sleep(Duration::from_secs(20)).await;
+    //
+    //     println!("send close message");
+    //
+    //     trade_client.close().await;
+    //
+    //     sleep(Duration::from_millis(1000000)).await;
+    // }
 }

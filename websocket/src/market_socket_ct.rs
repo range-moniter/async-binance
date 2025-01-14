@@ -1,5 +1,5 @@
 use client::stream::adaptor::BinanceWebsocketAdaptor;
-use client::stream::stream::{DefaultStreamPayloadProcess, SocketPayloadProcess};
+use client::stream::stream::SocketPayloadProcess;
 use crate::market::agg_trade_ct::AggTradeClient;
 use crate::market::avg_price_ct::AveragePriceClient;
 use crate::market::book_depth_ct::BookDepthClient;
@@ -24,110 +24,73 @@ use crate::market::types::trade::TradeStreamPayload;
 pub struct BinanceMarketWebsocketClient;
 
 impl BinanceMarketWebsocketClient {
-    pub async fn trade() -> TradeClient {
-        Self::trade_with_process(DefaultStreamPayloadProcess::default()).await
-    }
-
-    pub async fn trade_with_process<P>(process: P) -> TradeClient
+    pub async fn trade<P>(process: P) -> TradeClient
     where
         P: SocketPayloadProcess<TradeStreamPayload> + Send + 'static,
     {
         TradeClient::create_client(process).await
     }
 
-    pub async fn agg_trade() -> AggTradeClient {
-        Self::agg_trade_with_process(DefaultStreamPayloadProcess::default()).await
-    }
-
-    pub async fn agg_trade_with_process<P>(process: P) -> AggTradeClient
+    pub async fn agg_trade<P>(process: P) -> AggTradeClient
     where
         P: SocketPayloadProcess<AggTradeStreamPayload> + Send + 'static,
     {
         AggTradeClient::create_client(process).await
     }
 
-    pub async fn average_price() -> AveragePriceClient {
-        Self::average_price_with_process(DefaultStreamPayloadProcess::default()).await
-    }
 
-    pub async fn average_price_with_process<P>(process: P) -> AveragePriceClient
+    pub async fn average_price<P>(process: P) -> AveragePriceClient
     where
         P: SocketPayloadProcess<AveragePricePayload> + Send + 'static,
     {
        AveragePriceClient::create_client(process).await
     }
 
-    pub async fn book_depth() -> BookDepthClient {
-        Self::book_depth_with_process(DefaultStreamPayloadProcess::default()).await
-    }
-
-    pub async fn book_depth_with_process<P>(process: P) -> BookDepthClient
+    pub async fn book_depth<P>(process: P) -> BookDepthClient
     where
         P: SocketPayloadProcess<BookDepthStreamPayload> + Send + 'static,
     {
 
         BookDepthClient::create_client(process).await
     }
-    pub async fn depth() -> DepthClient {
-        Self::depth_with_process(DefaultStreamPayloadProcess::default()).await
-    }
 
-    pub async fn depth_with_process<P>(process: P) -> DepthClient
+    pub async fn depth<P>(process: P) -> DepthClient
     where
         P: SocketPayloadProcess<DepthStreamPayload> + Send + 'static,
     {
         DepthClient::create_client(process).await
     }
 
-    pub async fn kline() -> KlineClient {
-        Self::kline_with_process(DefaultStreamPayloadProcess::default()).await
-    }
-
-    pub async fn kline_with_process<P>(process: P) -> KlineClient
+    pub async fn kline<P>(process: P) -> KlineClient
     where
         P: SocketPayloadProcess<KlineStreamPayload> + Send + 'static,
     {
         KlineClient::create_client(process).await
     }
 
-    pub async fn symbol_book_ticker() -> SymbolBookTickerClient {
-        Self::symbol_book_ticker_with_process(DefaultStreamPayloadProcess::default()).await
-    }
-
-    pub async fn symbol_book_ticker_with_process<P>(process: P) -> SymbolBookTickerClient
+    pub async fn symbol_book_ticker<P>(process: P) -> SymbolBookTickerClient
     where
         P: SocketPayloadProcess<SymbolBookTickerPayload> + Send + 'static,
     {
         SymbolBookTickerClient::create_client(process).await
     }
 
-    pub async fn symbol_mini_ticker() -> SymbolMiniTickerClient {
-        Self::symbol_mini_ticker_with_process(DefaultStreamPayloadProcess::default()).await
-    }
-
-    pub async fn symbol_mini_ticker_with_process<P>(process: P) -> SymbolMiniTickerClient
+    pub async fn symbol_mini_ticker<P>(process: P) -> SymbolMiniTickerClient
     where
         P: SocketPayloadProcess<SymbolMiniTickerPayload> + Send + 'static,
     {
         SymbolMiniTickerClient::create_client(process).await
     }
 
-    pub async fn symbol_rolling_ticker() -> SymbolRollingClient {
-        Self::symbol_rolling_ticker_with_process(DefaultStreamPayloadProcess::default()).await
-    }
-
-    pub async fn symbol_rolling_ticker_with_process<P>(process: P) -> SymbolRollingClient
+    pub async fn symbol_rolling_ticker<P>(process: P) -> SymbolRollingClient
     where
         P: SocketPayloadProcess<SymbolRollingPayload> + Send + 'static,
     {
         SymbolRollingClient::create_client(process).await
     }
 
-    pub async fn symbol_ticker() -> SymbolTickerClient {
-        Self::symbol_ticker_with_process(DefaultStreamPayloadProcess::default()).await
-    }
 
-    pub async fn symbol_ticker_with_process<P>(process: P) -> SymbolTickerClient
+    pub async fn symbol_ticker<P>(process: P) -> SymbolTickerClient
     where
         P: SocketPayloadProcess<SymbolTickerPayload> + Send + 'static,
     {

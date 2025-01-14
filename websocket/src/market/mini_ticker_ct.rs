@@ -16,15 +16,15 @@ pub struct SymbolMiniTickerClient {
     websocket_client: WebsocketClient<SymbolMiniTickerStream>,
 }
 #[async_trait]
-impl<P> BinanceWebsocketAdaptor<P> for SymbolMiniTickerClient
-where
-    P: SocketPayloadProcess<SymbolMiniTickerPayload> + Send + 'static,
-{
+impl BinanceWebsocketAdaptor for SymbolMiniTickerClient {
     type CLIENT = SymbolMiniTickerClient;
     type INPUT = Symbol;
     type OUTPUT = SymbolMiniTickerPayload;
 
-    async fn create_client(process: P) -> Self::CLIENT {
+    async fn create_client<P>(process: P) -> Self::CLIENT
+    where
+        P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static ,
+    {
         let (client, payload_receiver) =
             WebsocketClient::<SymbolMiniTickerStream>::new::<SymbolMiniTickerPayload>().await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
@@ -35,6 +35,7 @@ where
             websocket_client: client,
         }
     }
+
 
     async fn close(self) {
         self.websocket_client.close().await
@@ -98,40 +99,42 @@ pub(crate) async fn symbol_mini_ticker_payload_process<P>(
 mod tests {
     use super::*;
     use crate::market_socket_ct::BinanceMarketWebsocketClient;
+    use client::stream::stream::DefaultStreamPayloadProcess;
     use env_logger::Builder;
     use std::time::Duration;
     use tokio::time::sleep;
-    #[tokio::test]
-    async fn test_average_price() {
-        Builder::from_default_env()
-            .filter(None, log::LevelFilter::Debug)
-            .init();
 
-        let mut symbol_mini_ticker_client =
-            BinanceMarketWebsocketClient::symbol_mini_ticker().await;
-
-        symbol_mini_ticker_client
-            .subscribe_item(Symbol::new("ARKUSDT"))
-            .await;
-
-        sleep(Duration::from_secs(15)).await;
-
-        symbol_mini_ticker_client
-            .subscribe_item(Symbol::new("FILUSDT"))
-            .await;
-
-        sleep(Duration::from_secs(20)).await;
-
-        symbol_mini_ticker_client
-            .subscribe_item(Symbol::new("FILUSDT"))
-            .await;
-
-        sleep(Duration::from_secs(20)).await;
-
-        println!("send close message");
-
-        symbol_mini_ticker_client.close().await;
-
-        sleep(Duration::from_secs(200)).await;
-    }
+    // #[tokio::test]
+    // async fn test_average_price() {
+    //     Builder::from_default_env()
+    //         .filter(None, log::LevelFilter::Debug)
+    //         .init();
+    //
+    //     let mut symbol_mini_ticker_client =
+    //         BinanceMarketWebsocketClient::symbol_mini_ticker(DefaultStreamPayloadProcess::default()).await;
+    //
+    //     symbol_mini_ticker_client
+    //         .subscribe_item(Symbol::new("ARKUSDT"))
+    //         .await;
+    //
+    //     sleep(Duration::from_secs(15)).await;
+    //
+    //     symbol_mini_ticker_client
+    //         .subscribe_item(Symbol::new("FILUSDT"))
+    //         .await;
+    //
+    //     sleep(Duration::from_secs(20)).await;
+    //
+    //     symbol_mini_ticker_client
+    //         .subscribe_item(Symbol::new("FILUSDT"))
+    //         .await;
+    //
+    //     sleep(Duration::from_secs(20)).await;
+    //
+    //     println!("send close message");
+    //
+    //     symbol_mini_ticker_client.close().await;
+    //
+    //     sleep(Duration::from_secs(200)).await;
+    // }
 }

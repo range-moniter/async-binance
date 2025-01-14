@@ -16,15 +16,15 @@ pub struct SymbolTickerClient {
     websocket_client: WebsocketClient<SymbolTickerStream>,
 }
 #[async_trait]
-impl<P> BinanceWebsocketAdaptor<P> for SymbolTickerClient
-where
-    P: SocketPayloadProcess<SymbolTickerPayload> + Send + 'static,
-{
+impl BinanceWebsocketAdaptor for SymbolTickerClient {
     type CLIENT = SymbolTickerClient;
     type INPUT = Symbol;
     type OUTPUT = SymbolTickerPayload;
 
-    async fn create_client(process: P) -> Self::CLIENT {
+    async fn create_client<P>(process: P) -> Self::CLIENT
+    where
+        P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static ,
+    {
         let (client, payload_receiver) =
             WebsocketClient::<SymbolTickerStream>::new::<SymbolTickerPayload>().await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
@@ -97,34 +97,36 @@ pub(crate) async fn symbol_ticker_payload_process<P>(
 mod tests {
     use super::*;
     use crate::market_socket_ct::BinanceMarketWebsocketClient;
+    use client::stream::stream::DefaultStreamPayloadProcess;
     use env_logger::Builder;
     use std::time::Duration;
     use tokio::time::sleep;
+
     #[tokio::test]
     async fn test_average_price() {
         Builder::from_default_env()
-            .filter(None, log::LevelFilter::Debug)
+            .filter(None, log::LevelFilter::Info)
             .init();
 
-        let mut symbol_ticker_client = BinanceMarketWebsocketClient::symbol_ticker().await;
+        let mut symbol_ticker_client = BinanceMarketWebsocketClient::symbol_ticker(DefaultStreamPayloadProcess::new()).await;
 
         symbol_ticker_client
             .subscribe_item(Symbol::new("ARKUSDT"))
             .await;
 
-        sleep(Duration::from_secs(15)).await;
+        sleep(Duration::from_secs(5)).await;
 
         symbol_ticker_client
             .subscribe_item(Symbol::new("FILUSDT"))
             .await;
 
-        sleep(Duration::from_secs(20)).await;
+        sleep(Duration::from_secs(5)).await;
 
         symbol_ticker_client
             .subscribe_item(Symbol::new("FILUSDT"))
             .await;
 
-        sleep(Duration::from_secs(20)).await;
+        sleep(Duration::from_secs(5)).await;
 
         println!("send close message");
 
