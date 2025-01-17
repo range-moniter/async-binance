@@ -1,4 +1,4 @@
-use crate::market::types::symbol_mini_ticker::{SymbolMiniTickerPayload, SymbolMiniTickerStream};
+use crate::market::types::symbol_ticker::{SymbolTickerPayload, SymbolTickerStream};
 use async_trait::async_trait;
 use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
@@ -9,33 +9,32 @@ use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
 
-pub type MiniTickerResponseStream =
-    Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<SymbolMiniTickerPayload>>> + Send>>;
+pub type SymbolTickerResponseStream =
+    Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<SymbolTickerPayload>>> + Send>>;
 
-pub struct SymbolMiniTickerClient {
-    websocket_client: WebsocketClient<SymbolMiniTickerStream>,
+pub struct SpotSymbolTickerClient {
+    websocket_client: WebsocketClient<SymbolTickerStream>,
 }
 #[async_trait]
-impl BinanceWebsocketAdaptor for SymbolMiniTickerClient {
-    type CLIENT = SymbolMiniTickerClient;
+impl BinanceWebsocketAdaptor for SpotSymbolTickerClient {
+    type CLIENT = SpotSymbolTickerClient;
     type INPUT = Symbol;
-    type OUTPUT = SymbolMiniTickerPayload;
+    type OUTPUT = SymbolTickerPayload;
 
     async fn create_client<P>(process: P) -> Self::CLIENT
     where
         P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static ,
     {
         let (client, payload_receiver) =
-            WebsocketClient::<SymbolMiniTickerStream>::new::<SymbolMiniTickerPayload>().await;
+            WebsocketClient::<SymbolTickerStream>::new::<SymbolTickerPayload>().await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
             payload_receiver,
         ));
-        tokio::spawn(symbol_mini_ticker_payload_process(trade_stream, process));
-        SymbolMiniTickerClient {
+        tokio::spawn(symbol_ticker_payload_process(trade_stream, process));
+        SpotSymbolTickerClient {
             websocket_client: client,
         }
     }
-
 
     async fn close(self) {
         self.websocket_client.close().await
@@ -43,7 +42,7 @@ impl BinanceWebsocketAdaptor for SymbolMiniTickerClient {
 
     async fn subscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .subscribe_single(SymbolMiniTickerStream::new(input))
+            .subscribe_single(SymbolTickerStream::new(input))
             .await
             .unwrap();
     }
@@ -51,7 +50,7 @@ impl BinanceWebsocketAdaptor for SymbolMiniTickerClient {
     async fn subscribe_items(&mut self, input: Vec<Self::INPUT>) {
         let params = input
             .into_iter()
-            .map(|symbol| SymbolMiniTickerStream::new(symbol))
+            .map(|symbol| SymbolTickerStream::new(symbol))
             .collect::<Vec<_>>();
         self.websocket_client
             .subscribe_multiple(params)
@@ -61,7 +60,7 @@ impl BinanceWebsocketAdaptor for SymbolMiniTickerClient {
 
     async fn unsubscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .unsubscribe_single(SymbolMiniTickerStream::new(input))
+            .unsubscribe_single(SymbolTickerStream::new(input))
             .await
             .unwrap();
     }
@@ -69,7 +68,7 @@ impl BinanceWebsocketAdaptor for SymbolMiniTickerClient {
     async fn unsubscribe_items(&mut self, input: Vec<Self::INPUT>) {
         let params = input
             .into_iter()
-            .map(|symbol| SymbolMiniTickerStream::new(symbol))
+            .map(|symbol| SymbolTickerStream::new(symbol))
             .collect::<Vec<_>>();
         self.websocket_client
             .unsubscribe_multiple(params)
@@ -85,12 +84,11 @@ impl BinanceWebsocketAdaptor for SymbolMiniTickerClient {
             .collect()
     }
 }
-
-pub(crate) async fn symbol_mini_ticker_payload_process<P>(
-    trade_response_stream: MiniTickerResponseStream,
+pub(crate) async fn symbol_ticker_payload_process<P>(
+    trade_response_stream: SymbolTickerResponseStream,
     mut processor: P,
 ) where
-    P: SocketPayloadProcess<SymbolMiniTickerPayload> + Send + 'static,
+    P: SocketPayloadProcess<SymbolTickerPayload> + Send + 'static,
 {
     processor.process(trade_response_stream).await;
 }
@@ -98,42 +96,41 @@ pub(crate) async fn symbol_mini_ticker_payload_process<P>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::market_socket_ct::BinanceMarketWebsocketClient;
     use client::stream::stream::DefaultStreamPayloadProcess;
     use env_logger::Builder;
     use std::time::Duration;
     use tokio::time::sleep;
+    use crate::spot_market_socket_ct::BinanceSpotMarketWebsocketClient;
 
     #[tokio::test]
     async fn test_average_price() {
         Builder::from_default_env()
-            .filter(None, log::LevelFilter::Debug)
+            .filter(None, log::LevelFilter::Info)
             .init();
 
-        let mut symbol_mini_ticker_client =
-            BinanceMarketWebsocketClient::symbol_mini_ticker(DefaultStreamPayloadProcess::new()).await;
+        let mut symbol_ticker_client = BinanceSpotMarketWebsocketClient::symbol_ticker(DefaultStreamPayloadProcess::new()).await;
 
-        symbol_mini_ticker_client
+        symbol_ticker_client
             .subscribe_item(Symbol::new("ARKUSDT"))
             .await;
 
-        sleep(Duration::from_secs(15)).await;
+        sleep(Duration::from_secs(5)).await;
 
-        symbol_mini_ticker_client
+        symbol_ticker_client
             .subscribe_item(Symbol::new("FILUSDT"))
             .await;
 
-        sleep(Duration::from_secs(20)).await;
+        sleep(Duration::from_secs(5)).await;
 
-        symbol_mini_ticker_client
+        symbol_ticker_client
             .subscribe_item(Symbol::new("FILUSDT"))
             .await;
 
-        sleep(Duration::from_secs(20)).await;
+        sleep(Duration::from_secs(5)).await;
 
         println!("send close message");
 
-        symbol_mini_ticker_client.close().await;
+        symbol_ticker_client.close().await;
 
         sleep(Duration::from_secs(200)).await;
     }

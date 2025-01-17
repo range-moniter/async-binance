@@ -12,13 +12,13 @@ use std::pin::Pin;
 pub type TradeResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<TradeStreamPayload>>> + Send>>;
 
-pub struct TradeClient {
+pub struct SpotTradeClient {
     websocket_client: WebsocketClient<TradeStream>,
 }
 #[async_trait]
-impl BinanceWebsocketAdaptor for TradeClient
+impl BinanceWebsocketAdaptor for SpotTradeClient
 {
-    type CLIENT = TradeClient;
+    type CLIENT = SpotTradeClient;
     type INPUT = Symbol;
     type OUTPUT = TradeStreamPayload;
 
@@ -32,7 +32,7 @@ impl BinanceWebsocketAdaptor for TradeClient
             payload_receiver,
         ));
         tokio::spawn(trade_payload_process(trade_stream, process));
-        TradeClient {
+        SpotTradeClient {
             websocket_client: client,
         }
     }
@@ -98,11 +98,11 @@ pub(crate) async fn trade_payload_process<P>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::market_socket_ct::BinanceMarketWebsocketClient;
     use client::stream::stream::DefaultStreamPayloadProcess;
     use env_logger::Builder;
     use std::time::Duration;
     use tokio::time::sleep;
+    use crate::spot_market_socket_ct::BinanceSpotMarketWebsocketClient;
 
     #[tokio::test]
     async fn test_trade() {
@@ -112,7 +112,7 @@ mod tests {
 
         let process = DefaultStreamPayloadProcess::<TradeStreamPayload>::new();
 
-        let mut trade_client = BinanceMarketWebsocketClient::trade(process).await;
+        let mut trade_client = BinanceSpotMarketWebsocketClient::trade(process).await;
 
         trade_client.subscribe_item(Symbol::new("ETHUSDT")).await;
 

@@ -1,49 +1,51 @@
-use crate::market::types::agg_trade::{AggTradeStream, AggTradeStreamPayload};
+use crate::market::types::kline::{KlineStream, KlineStreamPayload};
 use async_trait::async_trait;
 use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
 use client::stream::stream::SocketPayloadProcess;
 use futures_util::Stream;
+use general::enums::interval::Interval;
+use general::enums::timezone::Timezone;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
 
-pub type AggTradeResponseStream =
-    Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<AggTradeStreamPayload>>> + Send>>;
+pub type KlineResponseStream =
+    Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<KlineStreamPayload>>> + Send>>;
 
-pub struct AggTradeClient {
-    websocket_client: WebsocketClient<AggTradeStream>,
+pub struct SpotKlineClient {
+    websocket_client: WebsocketClient<KlineStream>,
 }
-
 #[async_trait]
-impl BinanceWebsocketAdaptor for AggTradeClient {
-    type CLIENT = AggTradeClient;
-    type INPUT = Symbol;
-    type OUTPUT = AggTradeStreamPayload;
+impl BinanceWebsocketAdaptor for SpotKlineClient {
+    type CLIENT = SpotKlineClient;
+    type INPUT = (Symbol, Interval, Option<Timezone>);
+    type OUTPUT = KlineStreamPayload;
 
     async fn create_client<P>(process: P) -> Self::CLIENT
     where
         P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static ,
     {
         let (client, payload_receiver) =
-            WebsocketClient::<AggTradeStream>::new::<AggTradeStreamPayload>().await;
+            WebsocketClient::<KlineStream>::new::<KlineStreamPayload>().await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
             payload_receiver,
         ));
-        tokio::spawn(agg_trade_payload_process(trade_stream, process));
-        AggTradeClient {
+        tokio::spawn(kline_payload_process(trade_stream, process));
+        SpotKlineClient {
             websocket_client: client,
         }
     }
 
+
     async fn close(self) {
-        self.websocket_client.close().await;
+        self.websocket_client.close().await
     }
 
     async fn subscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .subscribe_single(AggTradeStream::new(input))
+            .subscribe_single(KlineStream::new(input.0, input.1, input.2))
             .await
             .unwrap();
     }
@@ -51,7 +53,7 @@ impl BinanceWebsocketAdaptor for AggTradeClient {
     async fn subscribe_items(&mut self, input: Vec<Self::INPUT>) {
         let params = input
             .into_iter()
-            .map(|item| AggTradeStream::new(item))
+            .map(|(symbol, interval, timezone)| KlineStream::new(symbol, interval, timezone))
             .collect::<Vec<_>>();
         self.websocket_client
             .subscribe_multiple(params)
@@ -61,7 +63,7 @@ impl BinanceWebsocketAdaptor for AggTradeClient {
 
     async fn unsubscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .unsubscribe_single(AggTradeStream::new(input))
+            .unsubscribe_single(KlineStream::new(input.0, input.1, input.2))
             .await
             .unwrap();
     }
@@ -69,8 +71,8 @@ impl BinanceWebsocketAdaptor for AggTradeClient {
     async fn unsubscribe_items(&mut self, input: Vec<Self::INPUT>) {
         let params = input
             .into_iter()
-            .map(|symbol| AggTradeStream::new(symbol))
-            .collect::<Vec<AggTradeStream>>();
+            .map(|(symbol, interval, timezone)| KlineStream::new(symbol, interval, timezone))
+            .collect::<Vec<KlineStream>>();
         self.websocket_client
             .unsubscribe_multiple(params)
             .await
@@ -81,16 +83,22 @@ impl BinanceWebsocketAdaptor for AggTradeClient {
         self.websocket_client
             .get_all_subscribers()
             .iter()
-            .map(|item| item.get_symbol().clone())
+            .map(|item| {
+                (
+                    item.get_symbol(),
+                    item.get_kline_type(),
+                    item.get_timezone(),
+                )
+            })
             .collect()
     }
 }
 
-pub(crate) async fn agg_trade_payload_process<P>(
-    trade_response_stream: AggTradeResponseStream,
+pub(crate) async fn kline_payload_process<P>(
+    trade_response_stream: KlineResponseStream,
     mut processor: P,
 ) where
-    P: SocketPayloadProcess<AggTradeStreamPayload> + Send + 'static,
+    P: SocketPayloadProcess<KlineStreamPayload> + Send + 'static,
 {
     processor.process(trade_response_stream).await;
 }
@@ -98,32 +106,31 @@ pub(crate) async fn agg_trade_payload_process<P>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::market_socket_ct::BinanceMarketWebsocketClient;
     use client::stream::stream::DefaultStreamPayloadProcess;
     use env_logger::Builder;
     use std::time::Duration;
     use tokio::time::sleep;
+    use crate::spot_market_socket_ct::BinanceSpotMarketWebsocketClient;
 
     #[tokio::test]
-    async fn test_agg_trade() {
+    async fn test_average_price() {
         Builder::from_default_env()
             .filter(None, log::LevelFilter::Debug)
             .init();
 
-        let mut trade_client = BinanceMarketWebsocketClient::agg_trade(DefaultStreamPayloadProcess::new()).await;
+        let mut kline_client = BinanceSpotMarketWebsocketClient::kline(DefaultStreamPayloadProcess::new()).await;
 
-        trade_client.subscribe_item(Symbol::new("ARKUSDT")).await;
-
-        sleep(Duration::from_secs(15)).await;
-
-        trade_client.subscribe_item(Symbol::new("FILUSDT")).await;
+        kline_client
+            .subscribe_item((Symbol::new("ARKUSDT"), Interval::Minute1, None))
+            .await;
 
         sleep(Duration::from_secs(20)).await;
 
-        println!("send close message");
+        kline_client
+            .subscribe_item((Symbol::new("FILUSDT"), Interval::Second1, None))
+            .await;
+        kline_client.close().await;
 
-        trade_client.close().await;
-
-        sleep(Duration::from_millis(10)).await;
+        sleep(Duration::from_secs(20)).await;
     }
 }

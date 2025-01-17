@@ -1,49 +1,50 @@
-use crate::market::types::symbol_rolling::{SymbolRollingPayload, SymbolRollingWindowStream};
+use crate::market::types::average_price::{AveragePricePayload, AveragePriceStream};
 use async_trait::async_trait;
 use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
 use client::stream::stream::SocketPayloadProcess;
 use futures_util::Stream;
-use general::enums::window_size::WindowSize;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
 
-pub type SymbolRollingResponseStream =
-    Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<SymbolRollingPayload>>> + Send>>;
+pub type AvgPriceResponseStream =
+    Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<AveragePricePayload>>> + Send>>;
 
-pub struct SymbolRollingClient {
-    websocket_client: WebsocketClient<SymbolRollingWindowStream>,
+pub struct SpotAveragePriceClient {
+    websocket_client: WebsocketClient<AveragePriceStream>,
 }
+
 #[async_trait]
-impl BinanceWebsocketAdaptor for SymbolRollingClient {
-    type CLIENT = SymbolRollingClient;
-    type INPUT = (Symbol, WindowSize);
-    type OUTPUT = SymbolRollingPayload;
+impl BinanceWebsocketAdaptor for SpotAveragePriceClient {
+    type CLIENT = SpotAveragePriceClient;
+    type INPUT = Symbol;
+    type OUTPUT = AveragePricePayload;
 
     async fn create_client<P>(process: P) -> Self::CLIENT
     where
         P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static ,
     {
         let (client, payload_receiver) =
-            WebsocketClient::<SymbolRollingWindowStream>::new::<SymbolRollingPayload>().await;
+            WebsocketClient::<AveragePriceStream>::new::<AveragePricePayload>().await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
             payload_receiver,
         ));
-        tokio::spawn(symbol_rolling_payload_process(trade_stream, process));
-        SymbolRollingClient {
+        tokio::spawn(avg_price_payload_process(trade_stream, process));
+        SpotAveragePriceClient {
             websocket_client: client,
         }
     }
 
+
     async fn close(self) {
-        self.websocket_client.close().await
+        self.websocket_client.close().await;
     }
 
     async fn subscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .subscribe_single(SymbolRollingWindowStream::new(input.0, input.1))
+            .subscribe_single(AveragePriceStream::new(input))
             .await
             .unwrap();
     }
@@ -51,7 +52,7 @@ impl BinanceWebsocketAdaptor for SymbolRollingClient {
     async fn subscribe_items(&mut self, input: Vec<Self::INPUT>) {
         let params = input
             .into_iter()
-            .map(|(symbol, window_size)| SymbolRollingWindowStream::new(symbol, window_size))
+            .map(|item| AveragePriceStream::new(item))
             .collect::<Vec<_>>();
         self.websocket_client
             .subscribe_multiple(params)
@@ -61,7 +62,7 @@ impl BinanceWebsocketAdaptor for SymbolRollingClient {
 
     async fn unsubscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .unsubscribe_single(SymbolRollingWindowStream::new(input.0, input.1))
+            .unsubscribe_single(AveragePriceStream::new(input))
             .await
             .unwrap();
     }
@@ -69,8 +70,8 @@ impl BinanceWebsocketAdaptor for SymbolRollingClient {
     async fn unsubscribe_items(&mut self, input: Vec<Self::INPUT>) {
         let params = input
             .into_iter()
-            .map(|(symbol, interval)| SymbolRollingWindowStream::new(symbol, interval))
-            .collect::<Vec<_>>();
+            .map(|symbol| AveragePriceStream::new(symbol))
+            .collect::<Vec<AveragePriceStream>>();
         self.websocket_client
             .unsubscribe_multiple(params)
             .await
@@ -81,16 +82,16 @@ impl BinanceWebsocketAdaptor for SymbolRollingClient {
         self.websocket_client
             .get_all_subscribers()
             .iter()
-            .map(|item| (item.get_symbol(), item.get_window_size()))
+            .map(|item| item.get_symbol())
             .collect()
     }
 }
 
-pub(crate) async fn symbol_rolling_payload_process<P>(
-    trade_response_stream: SymbolRollingResponseStream,
+pub(crate) async fn avg_price_payload_process<P>(
+    trade_response_stream: AvgPriceResponseStream,
     mut processor: P,
 ) where
-    P: SocketPayloadProcess<SymbolRollingPayload> + Send + 'static,
+    P: SocketPayloadProcess<AveragePricePayload> + Send + 'static,
 {
     processor.process(trade_response_stream).await;
 }
@@ -98,11 +99,11 @@ pub(crate) async fn symbol_rolling_payload_process<P>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::market_socket_ct::BinanceMarketWebsocketClient;
     use client::stream::stream::DefaultStreamPayloadProcess;
     use env_logger::Builder;
     use std::time::Duration;
     use tokio::time::sleep;
+    use crate::spot_market_socket_ct::BinanceSpotMarketWebsocketClient;
 
     #[tokio::test]
     async fn test_average_price() {
@@ -110,22 +111,19 @@ mod tests {
             .filter(None, log::LevelFilter::Debug)
             .init();
 
-        let mut symbol_rolling_client = BinanceMarketWebsocketClient::symbol_rolling_ticker(DefaultStreamPayloadProcess::new()).await;
+        let mut trade_client = BinanceSpotMarketWebsocketClient::average_price(DefaultStreamPayloadProcess::new()).await;
 
-        symbol_rolling_client
-            .subscribe_item((Symbol::new("ARKUSDT"), WindowSize::FourHours))
-            .await;
+        trade_client.subscribe_item(Symbol::new("ARKUSDT")).await;
 
         sleep(Duration::from_secs(15)).await;
 
-        symbol_rolling_client
-            .subscribe_item((Symbol::new("FILUSDT"), WindowSize::FourHours))
-            .await;
+        trade_client.subscribe_item(Symbol::new("FILUSDT")).await;
+
         sleep(Duration::from_secs(20)).await;
 
         println!("send close message");
 
-        symbol_rolling_client.close().await;
+        trade_client.close().await;
 
         sleep(Duration::from_secs(200)).await;
     }

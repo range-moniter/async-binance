@@ -14,13 +14,13 @@ use std::pin::Pin;
 pub type BookDepthResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<BookDepthStreamPayload>>> + Send>>;
 
-pub struct BookDepthClient {
+pub struct SpotBookDepthClient {
     websocket_client: WebsocketClient<BookDepthStream>,
 }
 #[async_trait]
-impl BinanceWebsocketAdaptor for BookDepthClient
+impl BinanceWebsocketAdaptor for SpotBookDepthClient
 {
-    type CLIENT = BookDepthClient;
+    type CLIENT = SpotBookDepthClient;
     type INPUT = (Symbol, Level, Option<Speed>);
     type OUTPUT = BookDepthStreamPayload;
 
@@ -34,7 +34,7 @@ impl BinanceWebsocketAdaptor for BookDepthClient
                 payload_receiver,
             ));
             tokio::spawn(book_depth_payload_process(trade_stream, process));
-            BookDepthClient {
+            SpotBookDepthClient {
                 websocket_client: client,
             }
     }
@@ -99,11 +99,11 @@ pub(crate) async fn book_depth_payload_process<P>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::market_socket_ct::BinanceMarketWebsocketClient;
     use env_logger::Builder;
     use std::time::Duration;
     use tokio::time::sleep;
     use client::stream::stream::DefaultStreamPayloadProcess;
+    use crate::spot_market_socket_ct::BinanceSpotMarketWebsocketClient;
 
     #[tokio::test]
     async fn test_average_price() {
@@ -111,7 +111,7 @@ mod tests {
             .filter(None, log::LevelFilter::Debug)
             .init();
 
-        let mut book_depth_client = BinanceMarketWebsocketClient::book_depth(DefaultStreamPayloadProcess::new()).await;
+        let mut book_depth_client = BinanceSpotMarketWebsocketClient::book_depth(DefaultStreamPayloadProcess::new()).await;
 
         book_depth_client
             .subscribe_item((Symbol::new("ARKUSDT"), Level::L1, None))
