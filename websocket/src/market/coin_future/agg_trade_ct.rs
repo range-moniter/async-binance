@@ -27,7 +27,7 @@ impl BinanceWebsocketAdaptor for UsdFutureAggTradeClient {
         P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static ,
     {
         let (client, payload_receiver) =
-            WebsocketClient::<AggTradeStream>::new_with_uri::<AggTradeStreamPayload>("wss://fstream.binance.com").await;
+            WebsocketClient::<AggTradeStream>::new_with_uri::<AggTradeStreamPayload>("wss://fstream.binance.com/ws").await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
             payload_receiver,
         ));

@@ -1,8 +1,8 @@
-use bigdecimal::BigDecimal;
-use serde::{Deserialize, Serialize};
-use client::stream::stream::StreamNameFormat;
 use crate::market::types::event_type::EventType;
+use bigdecimal::BigDecimal;
+use client::stream::stream::StreamNameFormat;
 use general::symbol::Symbol;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct AggTradeStream {
@@ -45,6 +45,6 @@ pub struct AggTradeStreamPayload {
     pub trade_time: u64,
     #[serde(rename = "m")]
     pub is_buyer: bool,
-    #[serde(rename = "M")]
+    #[serde(rename = "M", default)]
     pub addition: bool,
 }
