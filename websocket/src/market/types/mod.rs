@@ -9,3 +9,4 @@ pub mod symbol_ticker;
 pub mod symbol_rolling;
 pub mod symbol_mini_ticker;
 pub mod event_type;
+pub mod mark_price;
