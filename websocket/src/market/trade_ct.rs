@@ -94,35 +94,3 @@ pub(crate) async fn trade_payload_process<P>(
 {
     processor.process(trade_response_stream).await;
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use client::stream::stream::DefaultStreamPayloadProcess;
-    use env_logger::Builder;
-    use std::time::Duration;
-    use tokio::time::sleep;
-    use crate::spot_market_socket_ct::BinanceSpotMarketWebsocketClient;
-
-    #[tokio::test]
-    async fn test_trade() {
-        Builder::from_default_env()
-            .filter(None, log::LevelFilter::Info)
-            .init();
-
-        let process = DefaultStreamPayloadProcess::<TradeStreamPayload>::new();
-
-        let mut trade_client = BinanceSpotMarketWebsocketClient::trade(process).await;
-
-        trade_client.subscribe_item(Symbol::new("ETHUSDT")).await;
-
-        sleep(Duration::from_secs(5)).await;
-
-        println!("send close message");
-
-        trade_client.close().await;
-
-        println!("client close message");
-        sleep(Duration::from_millis(1000000)).await;
-    }
-}

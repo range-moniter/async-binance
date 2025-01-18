@@ -100,3 +100,39 @@ impl BinanceUsdFutureMarketWebsocketClient {
         SymbolTickerClient::create_client(process, USD_FUTURE_SOCKET_URI).await
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use std::time::Duration;
+    use env_logger::Builder;
+    use tokio::time::sleep;
+    use client::stream::stream::DefaultStreamPayloadProcess;
+    use general::symbol::Symbol;
+    use super::*;
+
+    #[tokio::test]
+    async fn test_future_trade() {
+        Builder::from_default_env()
+            .filter(None, log::LevelFilter::Debug)
+            .init();
+        let mut trade_client = BinanceUsdFutureMarketWebsocketClient::trade(DefaultStreamPayloadProcess::new()).await;
+        trade_client.subscribe_item(Symbol::new("BTCUSDT")).await;
+        sleep(Duration::from_secs(10)).await;
+        println!("Sleeping 10 seconds...");
+    }
+
+    #[tokio::test]
+    async fn test_future_agg_trade() {
+        Builder::from_default_env()
+            .filter(None, log::LevelFilter::Debug)
+            .init();
+        let mut trade_client = BinanceUsdFutureMarketWebsocketClient::agg_trade(DefaultStreamPayloadProcess::new()).await;
+        trade_client.subscribe_item(Symbol::new("BTCUSDT")).await;
+        sleep(Duration::from_secs(2)).await;
+        trade_client.close().await;
+        sleep(Duration::from_secs(10)).await;
+        println!("Sleeping 10 seconds...");
+
+    }
+}

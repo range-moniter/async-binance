@@ -44,6 +44,6 @@ pub struct TradeStreamPayload {
     pub trade_time: u64,
     #[serde(rename = "m")]
     pub is_buyer_maker: bool,
-    #[serde(rename = "M")]
+    #[serde(rename = "M", default)]
     pub addition: bool,
 }
