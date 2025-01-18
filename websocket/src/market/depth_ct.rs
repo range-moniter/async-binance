@@ -1,41 +1,41 @@
-use crate::market::types::symbol_mini_ticker::{SymbolMiniTickerPayload, SymbolMiniTickerStream};
+use crate::market::types::depth::{DepthStream, DepthStreamPayload};
 use async_trait::async_trait;
 use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
 use client::stream::stream::SocketPayloadProcess;
 use futures_util::Stream;
+use general::enums::speed::Speed;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
 
-pub type MiniTickerResponseStream =
-    Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<SymbolMiniTickerPayload>>> + Send>>;
+pub type DepthResponseStream =
+    Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<DepthStreamPayload>>> + Send>>;
 
-pub struct SpotSymbolMiniTickerClient {
-    websocket_client: WebsocketClient<SymbolMiniTickerStream>,
+pub struct DepthClient {
+    websocket_client: WebsocketClient<DepthStream>,
 }
 #[async_trait]
-impl BinanceWebsocketAdaptor for SpotSymbolMiniTickerClient {
-    type CLIENT = SpotSymbolMiniTickerClient;
-    type INPUT = Symbol;
-    type OUTPUT = SymbolMiniTickerPayload;
+impl BinanceWebsocketAdaptor for DepthClient {
+    type CLIENT = DepthClient;
+    type INPUT = (Symbol, Option<Speed>);
+    type OUTPUT = DepthStreamPayload;
 
-    async fn create_client<P>(process: P) -> Self::CLIENT
+    async fn create_client<P>(process: P, uri: &str) -> Self::CLIENT
     where
         P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static ,
     {
         let (client, payload_receiver) =
-            WebsocketClient::<SymbolMiniTickerStream>::new::<SymbolMiniTickerPayload>().await;
+            WebsocketClient::<DepthStream>::new_with_uri::<DepthStreamPayload>(uri).await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
             payload_receiver,
         ));
-        tokio::spawn(symbol_mini_ticker_payload_process(trade_stream, process));
-        SpotSymbolMiniTickerClient {
+        tokio::spawn(depth_payload_process(trade_stream, process));
+        DepthClient {
             websocket_client: client,
         }
     }
-
 
     async fn close(self) {
         self.websocket_client.close().await
@@ -43,7 +43,7 @@ impl BinanceWebsocketAdaptor for SpotSymbolMiniTickerClient {
 
     async fn subscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .subscribe_single(SymbolMiniTickerStream::new(input))
+            .subscribe_single(DepthStream::new(input.0, input.1))
             .await
             .unwrap();
     }
@@ -51,7 +51,7 @@ impl BinanceWebsocketAdaptor for SpotSymbolMiniTickerClient {
     async fn subscribe_items(&mut self, input: Vec<Self::INPUT>) {
         let params = input
             .into_iter()
-            .map(|symbol| SymbolMiniTickerStream::new(symbol))
+            .map(|(symbol, speed)| DepthStream::new(symbol, speed))
             .collect::<Vec<_>>();
         self.websocket_client
             .subscribe_multiple(params)
@@ -61,7 +61,7 @@ impl BinanceWebsocketAdaptor for SpotSymbolMiniTickerClient {
 
     async fn unsubscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .unsubscribe_single(SymbolMiniTickerStream::new(input))
+            .unsubscribe_single(DepthStream::new(input.0, input.1))
             .await
             .unwrap();
     }
@@ -69,8 +69,8 @@ impl BinanceWebsocketAdaptor for SpotSymbolMiniTickerClient {
     async fn unsubscribe_items(&mut self, input: Vec<Self::INPUT>) {
         let params = input
             .into_iter()
-            .map(|symbol| SymbolMiniTickerStream::new(symbol))
-            .collect::<Vec<_>>();
+            .map(|(symbol, speed)| DepthStream::new(symbol, speed))
+            .collect::<Vec<DepthStream>>();
         self.websocket_client
             .unsubscribe_multiple(params)
             .await
@@ -81,16 +81,16 @@ impl BinanceWebsocketAdaptor for SpotSymbolMiniTickerClient {
         self.websocket_client
             .get_all_subscribers()
             .iter()
-            .map(|item| item.get_symbol())
+            .map(|item| (item.get_symbol(), item.get_speed()))
             .collect()
     }
 }
 
-pub(crate) async fn symbol_mini_ticker_payload_process<P>(
-    trade_response_stream: MiniTickerResponseStream,
+pub(crate) async fn depth_payload_process<P>(
+    trade_response_stream: DepthResponseStream,
     mut processor: P,
 ) where
-    P: SocketPayloadProcess<SymbolMiniTickerPayload> + Send + 'static,
+    P: SocketPayloadProcess<DepthStreamPayload> + Send + 'static,
 {
     processor.process(trade_response_stream).await;
 }
@@ -110,30 +110,19 @@ mod tests {
             .filter(None, log::LevelFilter::Debug)
             .init();
 
-        let mut symbol_mini_ticker_client =
-            BinanceSpotMarketWebsocketClient::symbol_mini_ticker(DefaultStreamPayloadProcess::new()).await;
+        let mut book_depth_client = BinanceSpotMarketWebsocketClient::depth(DefaultStreamPayloadProcess::new()).await;
 
-        symbol_mini_ticker_client
-            .subscribe_item(Symbol::new("ARKUSDT"))
-            .await;
+        book_depth_client.subscribe_item((Symbol::new("ARKUSDT"), None)).await;
 
         sleep(Duration::from_secs(15)).await;
 
-        symbol_mini_ticker_client
-            .subscribe_item(Symbol::new("FILUSDT"))
-            .await;
-
-        sleep(Duration::from_secs(20)).await;
-
-        symbol_mini_ticker_client
-            .subscribe_item(Symbol::new("FILUSDT"))
-            .await;
+        book_depth_client.subscribe_item((Symbol::new("FILUSDT"), None)).await;
 
         sleep(Duration::from_secs(20)).await;
 
         println!("send close message");
 
-        symbol_mini_ticker_client.close().await;
+        book_depth_client.close().await;
 
         sleep(Duration::from_secs(200)).await;
     }

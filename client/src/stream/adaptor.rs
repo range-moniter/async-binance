@@ -6,7 +6,7 @@ pub trait BinanceWebsocketAdaptor {
     type CLIENT;
     type INPUT;
     type OUTPUT;
-    async fn create_client<P>(process: P) -> Self::CLIENT
+    async fn create_client<P>(process: P, uri: &str) -> Self::CLIENT
     where
         P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static ;
     async fn close(self);

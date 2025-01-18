@@ -12,26 +12,26 @@ use std::pin::Pin;
 pub type SymbolTickerResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<SymbolTickerPayload>>> + Send>>;
 
-pub struct SpotSymbolTickerClient {
+pub struct SymbolTickerClient {
     websocket_client: WebsocketClient<SymbolTickerStream>,
 }
 #[async_trait]
-impl BinanceWebsocketAdaptor for SpotSymbolTickerClient {
-    type CLIENT = SpotSymbolTickerClient;
+impl BinanceWebsocketAdaptor for SymbolTickerClient {
+    type CLIENT = SymbolTickerClient;
     type INPUT = Symbol;
     type OUTPUT = SymbolTickerPayload;
 
-    async fn create_client<P>(process: P) -> Self::CLIENT
+    async fn create_client<P>(process: P, uri: &str) -> Self::CLIENT
     where
         P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static ,
     {
         let (client, payload_receiver) =
-            WebsocketClient::<SymbolTickerStream>::new::<SymbolTickerPayload>().await;
+            WebsocketClient::<SymbolTickerStream>::new_with_uri::<SymbolTickerPayload>(uri).await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
             payload_receiver,
         ));
         tokio::spawn(symbol_ticker_payload_process(trade_stream, process));
-        SpotSymbolTickerClient {
+        SymbolTickerClient {
             websocket_client: client,
         }
     }

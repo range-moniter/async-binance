@@ -1,41 +1,41 @@
-use crate::market::types::symbol_book_ticker::{SymbolBookTickerPayload, SymbolBookTickerStream};
+use crate::market::types::trade::{TradeStream, TradeStreamPayload};
 use async_trait::async_trait;
 use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
-use client::stream::stream::SocketPayloadProcess;
+use client::stream::stream::{DefaultStreamPayloadProcess, SocketPayloadProcess};
 use futures_util::Stream;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
 
-pub type SymbolBookTickerResponseStream =
-    Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<SymbolBookTickerPayload>>> + Send>>;
+pub type TradeResponseStream =
+    Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<TradeStreamPayload>>> + Send>>;
 
-pub struct SpotSymbolBookTickerClient {
-    websocket_client: WebsocketClient<SymbolBookTickerStream>,
+pub struct TradeClient {
+    websocket_client: WebsocketClient<TradeStream>,
 }
 #[async_trait]
-impl BinanceWebsocketAdaptor for SpotSymbolBookTickerClient {
-    type CLIENT = SpotSymbolBookTickerClient;
+impl BinanceWebsocketAdaptor for TradeClient
+{
+    type CLIENT = TradeClient;
     type INPUT = Symbol;
-    type OUTPUT = SymbolBookTickerPayload;
+    type OUTPUT = TradeStreamPayload;
 
-    async fn create_client<P>(process: P) -> Self::CLIENT
+    async fn create_client<P>(process: P, uri: &str) -> Self::CLIENT
     where
         P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static ,
     {
         let (client, payload_receiver) =
-            WebsocketClient::<SymbolBookTickerStream>::new::<SymbolBookTickerPayload>().await;
+            WebsocketClient::<TradeStream>::new_with_uri::<TradeStreamPayload>(uri).await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
             payload_receiver,
         ));
-        tokio::spawn(symbol_book_ticker_payload_process(trade_stream, process));
-        SpotSymbolBookTickerClient {
+        tokio::spawn(trade_payload_process(trade_stream, process));
+        TradeClient {
             websocket_client: client,
         }
     }
-
 
     async fn close(self) {
         self.websocket_client.close().await
@@ -43,7 +43,7 @@ impl BinanceWebsocketAdaptor for SpotSymbolBookTickerClient {
 
     async fn subscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .subscribe_single(SymbolBookTickerStream::new(input))
+            .subscribe_single(TradeStream::new(input))
             .await
             .unwrap();
     }
@@ -51,7 +51,7 @@ impl BinanceWebsocketAdaptor for SpotSymbolBookTickerClient {
     async fn subscribe_items(&mut self, input: Vec<Self::INPUT>) {
         let params = input
             .into_iter()
-            .map(|symbol| SymbolBookTickerStream::new(symbol))
+            .map(|item| TradeStream::new(item))
             .collect::<Vec<_>>();
         self.websocket_client
             .subscribe_multiple(params)
@@ -61,7 +61,7 @@ impl BinanceWebsocketAdaptor for SpotSymbolBookTickerClient {
 
     async fn unsubscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .unsubscribe_single(SymbolBookTickerStream::new(input))
+            .unsubscribe_single(TradeStream::new(input))
             .await
             .unwrap();
     }
@@ -69,8 +69,8 @@ impl BinanceWebsocketAdaptor for SpotSymbolBookTickerClient {
     async fn unsubscribe_items(&mut self, input: Vec<Self::INPUT>) {
         let params = input
             .into_iter()
-            .map(|symbol| SymbolBookTickerStream::new(symbol))
-            .collect::<Vec<_>>();
+            .map(|symbol| TradeStream::new(symbol))
+            .collect::<Vec<TradeStream>>();
         self.websocket_client
             .unsubscribe_multiple(params)
             .await
@@ -86,11 +86,11 @@ impl BinanceWebsocketAdaptor for SpotSymbolBookTickerClient {
     }
 }
 
-pub(crate) async fn symbol_book_ticker_payload_process<P>(
-    trade_response_stream: SymbolBookTickerResponseStream,
+pub(crate) async fn trade_payload_process<P>(
+    trade_response_stream: TradeResponseStream,
     mut processor: P,
 ) where
-    P: SocketPayloadProcess<SymbolBookTickerPayload> + Send + 'static,
+    P: SocketPayloadProcess<TradeStreamPayload> + Send + 'static,
 {
     processor.process(trade_response_stream).await;
 }
@@ -100,41 +100,29 @@ mod tests {
     use super::*;
     use client::stream::stream::DefaultStreamPayloadProcess;
     use env_logger::Builder;
-    use general::enums::interval::Interval;
     use std::time::Duration;
     use tokio::time::sleep;
     use crate::spot_market_socket_ct::BinanceSpotMarketWebsocketClient;
 
     #[tokio::test]
-    async fn test_average_price() {
+    async fn test_trade() {
         Builder::from_default_env()
-            .filter(None, log::LevelFilter::Debug)
+            .filter(None, log::LevelFilter::Info)
             .init();
 
-        let mut symbol_book_ticker_client = BinanceSpotMarketWebsocketClient::kline(DefaultStreamPayloadProcess::new()).await;
+        let process = DefaultStreamPayloadProcess::<TradeStreamPayload>::new();
 
-        symbol_book_ticker_client
-            .subscribe_item((Symbol::new("ARKUSDT"), Interval::Second1, None))
-            .await;
+        let mut trade_client = BinanceSpotMarketWebsocketClient::trade(process).await;
 
-        sleep(Duration::from_secs(15)).await;
+        trade_client.subscribe_item(Symbol::new("ETHUSDT")).await;
 
-        symbol_book_ticker_client
-            .subscribe_item((Symbol::new("ETHUSDT"), Interval::Second1, None))
-            .await;
-
-        sleep(Duration::from_secs(20)).await;
-
-        symbol_book_ticker_client
-            .unsubscribe_item((Symbol::new("BTCUSDT"), Interval::Second1, None))
-            .await;
-
-        sleep(Duration::from_secs(20)).await;
+        sleep(Duration::from_secs(5)).await;
 
         println!("send close message");
 
-        symbol_book_ticker_client.close().await;
+        trade_client.close().await;
 
-        sleep(Duration::from_secs(200)).await;
+        println!("client close message");
+        sleep(Duration::from_millis(1000000)).await;
     }
 }

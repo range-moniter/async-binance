@@ -21,12 +21,12 @@ impl BinanceWebsocketAdaptor for UserDataClient {
     type INPUT = String;
     type OUTPUT = UserDataEventPayload;
 
-    async fn create_client<P>(process: P) -> Self::CLIENT
+    async fn create_client<P>(process: P, uri: &str) -> Self::CLIENT
     where
         P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static,
     {
         let (client, payload_receiver) =
-            WebsocketClient::<UserDataStream>::new::<UserDataEventPayload>().await;
+            WebsocketClient::<UserDataStream>::new_with_uri::<UserDataEventPayload>(uri).await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
             payload_receiver,
         ));
@@ -97,7 +97,7 @@ pub(crate) async fn user_data_payload_process<P>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::user_data_stream_ct::BinanceUserdataWebsocketClient;
+    use crate::spot_user_data_stream_ct::BinanceUserdataWebsocketClient;
     use client::stream::stream::DefaultStreamPayloadProcess;
     use env_logger::Builder;
     use std::time::Duration;

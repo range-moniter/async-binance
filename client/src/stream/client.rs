@@ -16,29 +16,6 @@ pub struct WebsocketClient<I> {
 }
 
 impl<I> WebsocketClient<I> {
-    pub async fn new<O>() -> (
-        WebsocketClient<I>,
-        UnboundedReceiver<BinanceResult<SocketPayloadActor<O>>>,
-    )
-    where
-        I: StreamNameFormat + Clone + Hash + Eq + Send + 'static,
-        O: DeserializeOwned + Send + 'static + Debug,
-    {
-        let (item_sender, item_receiver) = channel::<SocketItemChangeActor<I>>(64);
-        let socket_actor_handle = SocketActorHandle::new(item_sender);
-        let (socket_health_sender, socket_health_receiver) = channel::<Message>(1);
-        let (payload_sender, payload_receiver) =
-            unbounded_channel::<BinanceResult<SocketPayloadActor<O>>>();
-        let socket_sender_state =
-            SocketSenderState::new(item_receiver, socket_health_receiver).await;
-        let socket_receiver_state = SocketReceiverState::new(payload_sender, socket_health_sender);
-        tokio::spawn(stream(socket_sender_state, socket_receiver_state));
-        let client = WebsocketClient {
-            socket_item: HashSet::new(),
-            socket_actor_handle,
-        };
-        (client, payload_receiver)
-    }
 
     pub async fn new_with_uri<O>(uri: &str) -> (
         WebsocketClient<I>,

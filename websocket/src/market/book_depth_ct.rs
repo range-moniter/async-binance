@@ -12,31 +12,31 @@ use general::symbol::Symbol;
 use std::pin::Pin;
 
 pub type BookDepthResponseStream =
-    Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<BookDepthStreamPayload>>> + Send>>;
+Pin<Box<dyn Stream<Item=BinanceResult<SocketPayloadActor<BookDepthStreamPayload>>> + Send>>;
 
-pub struct SpotBookDepthClient {
+pub struct BookDepthClient {
     websocket_client: WebsocketClient<BookDepthStream>,
 }
 #[async_trait]
-impl BinanceWebsocketAdaptor for SpotBookDepthClient
+impl BinanceWebsocketAdaptor for BookDepthClient
 {
-    type CLIENT = SpotBookDepthClient;
+    type CLIENT = BookDepthClient;
     type INPUT = (Symbol, Level, Option<Speed>);
     type OUTPUT = BookDepthStreamPayload;
 
-    async fn create_client<P>(process: P) -> Self::CLIENT
+    async fn create_client<P>(process: P, uri: &str) -> Self::CLIENT
     where
-        P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static
+        P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static,
     {
-            let (client, payload_receiver) =
-                WebsocketClient::<BookDepthStream>::new::<BookDepthStreamPayload>().await;
-            let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
-                payload_receiver,
-            ));
-            tokio::spawn(book_depth_payload_process(trade_stream, process));
-            SpotBookDepthClient {
-                websocket_client: client,
-            }
+        let (client, payload_receiver) =
+            WebsocketClient::<BookDepthStream>::new_with_uri::<BookDepthStreamPayload>(uri).await;
+        let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
+            payload_receiver,
+        ));
+        tokio::spawn(book_depth_payload_process(trade_stream, process));
+        BookDepthClient {
+            websocket_client: client,
+        }
     }
 
     async fn close(self) {

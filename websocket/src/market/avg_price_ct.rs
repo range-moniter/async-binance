@@ -1,49 +1,51 @@
-use crate::market::types::trade::{TradeStream, TradeStreamPayload};
+use crate::market::types::average_price::{AveragePricePayload, AveragePriceStream};
 use async_trait::async_trait;
 use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
-use client::stream::stream::{DefaultStreamPayloadProcess, SocketPayloadProcess};
+use client::stream::stream::SocketPayloadProcess;
 use futures_util::Stream;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
 use std::pin::Pin;
 
-pub type TradeResponseStream =
-    Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<TradeStreamPayload>>> + Send>>;
+pub type AvgPriceResponseStream =
+    Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<AveragePricePayload>>> + Send>>;
 
-pub struct SpotTradeClient {
-    websocket_client: WebsocketClient<TradeStream>,
+pub struct AveragePriceClient {
+    websocket_client: WebsocketClient<AveragePriceStream>,
 }
-#[async_trait]
-impl BinanceWebsocketAdaptor for SpotTradeClient
-{
-    type CLIENT = SpotTradeClient;
-    type INPUT = Symbol;
-    type OUTPUT = TradeStreamPayload;
 
-    async fn create_client<P>(process: P) -> Self::CLIENT
+#[async_trait]
+impl BinanceWebsocketAdaptor for AveragePriceClient {
+    type CLIENT = AveragePriceClient;
+    type INPUT = Symbol;
+    type OUTPUT = AveragePricePayload;
+
+    async fn create_client<P>(process: P, uri: &str) -> Self::CLIENT
     where
         P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static ,
     {
-        let (client, payload_receiver) =
-            WebsocketClient::<TradeStream>::new::<TradeStreamPayload>().await;
+
+        let (client, payload_receiver)
+            = WebsocketClient::<AveragePriceStream>::new_with_uri::<AveragePricePayload>(uri).await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
             payload_receiver,
         ));
-        tokio::spawn(trade_payload_process(trade_stream, process));
-        SpotTradeClient {
+        tokio::spawn(avg_price_payload_process(trade_stream, process));
+        AveragePriceClient {
             websocket_client: client,
         }
     }
 
+
     async fn close(self) {
-        self.websocket_client.close().await
+        self.websocket_client.close().await;
     }
 
     async fn subscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .subscribe_single(TradeStream::new(input))
+            .subscribe_single(AveragePriceStream::new(input))
             .await
             .unwrap();
     }
@@ -51,7 +53,7 @@ impl BinanceWebsocketAdaptor for SpotTradeClient
     async fn subscribe_items(&mut self, input: Vec<Self::INPUT>) {
         let params = input
             .into_iter()
-            .map(|item| TradeStream::new(item))
+            .map(|item| AveragePriceStream::new(item))
             .collect::<Vec<_>>();
         self.websocket_client
             .subscribe_multiple(params)
@@ -61,7 +63,7 @@ impl BinanceWebsocketAdaptor for SpotTradeClient
 
     async fn unsubscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .unsubscribe_single(TradeStream::new(input))
+            .unsubscribe_single(AveragePriceStream::new(input))
             .await
             .unwrap();
     }
@@ -69,8 +71,8 @@ impl BinanceWebsocketAdaptor for SpotTradeClient
     async fn unsubscribe_items(&mut self, input: Vec<Self::INPUT>) {
         let params = input
             .into_iter()
-            .map(|symbol| TradeStream::new(symbol))
-            .collect::<Vec<TradeStream>>();
+            .map(|symbol| AveragePriceStream::new(symbol))
+            .collect::<Vec<AveragePriceStream>>();
         self.websocket_client
             .unsubscribe_multiple(params)
             .await
@@ -86,11 +88,11 @@ impl BinanceWebsocketAdaptor for SpotTradeClient
     }
 }
 
-pub(crate) async fn trade_payload_process<P>(
-    trade_response_stream: TradeResponseStream,
+pub(crate) async fn avg_price_payload_process<P>(
+    trade_response_stream: AvgPriceResponseStream,
     mut processor: P,
 ) where
-    P: SocketPayloadProcess<TradeStreamPayload> + Send + 'static,
+    P: SocketPayloadProcess<AveragePricePayload> + Send + 'static,
 {
     processor.process(trade_response_stream).await;
 }
@@ -105,24 +107,25 @@ mod tests {
     use crate::spot_market_socket_ct::BinanceSpotMarketWebsocketClient;
 
     #[tokio::test]
-    async fn test_trade() {
+    async fn test_average_price() {
         Builder::from_default_env()
-            .filter(None, log::LevelFilter::Info)
+            .filter(None, log::LevelFilter::Debug)
             .init();
 
-        let process = DefaultStreamPayloadProcess::<TradeStreamPayload>::new();
+        let mut trade_client = BinanceSpotMarketWebsocketClient::average_price(DefaultStreamPayloadProcess::new()).await;
 
-        let mut trade_client = BinanceSpotMarketWebsocketClient::trade(process).await;
+        trade_client.subscribe_item(Symbol::new("ARKUSDT")).await;
 
-        trade_client.subscribe_item(Symbol::new("ETHUSDT")).await;
+        sleep(Duration::from_secs(15)).await;
 
-        sleep(Duration::from_secs(5)).await;
+        trade_client.subscribe_item(Symbol::new("FILUSDT")).await;
+
+        sleep(Duration::from_secs(20)).await;
 
         println!("send close message");
 
         trade_client.close().await;
 
-        println!("client close message");
-        sleep(Duration::from_millis(1000000)).await;
+        sleep(Duration::from_secs(200)).await;
     }
 }
