@@ -10,3 +10,4 @@ pub mod rolling_ct;
 pub mod ticker_ct;
 pub mod trade_ct;
 pub mod mark_price_ct;
+pub mod all_mark_price_ct;

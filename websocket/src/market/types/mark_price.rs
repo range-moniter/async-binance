@@ -34,6 +34,33 @@ impl StreamNameFormat for MarkPriceStream {
     }
 }
 
+
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct AllMarkPriceStream {
+    is_second: bool,
+}
+
+impl AllMarkPriceStream {
+    pub fn new(is_second: bool) -> AllMarkPriceStream {
+        AllMarkPriceStream {  is_second }
+    }
+    pub fn is_second(&self) -> bool {
+        self.is_second
+    }
+}
+
+
+impl StreamNameFormat for AllMarkPriceStream {
+    fn stream_name(&self) -> String {
+        if self.is_second {
+            "!markPrice@arr".to_string()
+        } else {
+            "!markPrice@arr@1s".to_string()
+        }
+    }
+}
+
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MarkPriceStreamPayload {
     #[serde(rename = "e")]
