@@ -26,16 +26,16 @@ impl StreamNameFormat for SymbolTickerStream {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct AllSymbolTickerStream;
+pub struct TotalSymbolTickerStream;
 
-impl StreamNameFormat for AllSymbolTickerStream {
+impl StreamNameFormat for TotalSymbolTickerStream {
     fn stream_name(&self) -> String {
         "!ticker@arr".to_string()
     }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct AllSymbolTickerPayload(Vec<SymbolTickerPayload>);
+pub struct TotalSymbolTickerPayload(Vec<SymbolTickerPayload>);
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SymbolTickerPayload {

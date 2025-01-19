@@ -9,7 +9,7 @@ pub struct SymbolMiniTickerStream {
     symbol: Symbol,
 }
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct AllSymbolMiniTickerStream;
+pub struct TotalSymbolMiniTickerStream;
 
 impl SymbolMiniTickerStream {
     pub fn new(symbol: Symbol) -> SymbolMiniTickerStream {
@@ -26,7 +26,7 @@ impl StreamNameFormat for SymbolMiniTickerStream {
     }
 }
 
-impl StreamNameFormat for AllSymbolMiniTickerStream {
+impl StreamNameFormat for TotalSymbolMiniTickerStream {
     fn stream_name(&self) -> String {
         "!miniTicker@arr".to_string()
     }
@@ -54,3 +54,5 @@ pub struct SymbolMiniTickerPayload {
     pub total_quote_volume: BigDecimal,
 
 }
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TotalSymbolMiniTickerPayload (Vec<SymbolMiniTickerPayload>);

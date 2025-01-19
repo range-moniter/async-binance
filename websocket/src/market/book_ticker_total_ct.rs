@@ -1,3 +1,4 @@
+use crate::market::types::symbol_book_ticker::{SymbolBookTickerPayload, SymbolBookTickerStream, TotalSymbolBookTickerStream};
 use async_trait::async_trait;
 use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
@@ -5,36 +6,36 @@ use client::stream::payload::SocketPayloadActor;
 use client::stream::stream::SocketPayloadProcess;
 use futures_util::Stream;
 use general::result::BinanceResult;
+use general::symbol::Symbol;
 use std::pin::Pin;
-use crate::market::types::mark_price::{AllMarkPriceStream, MarkPriceStreamPayload};
 
-pub type AllMarkPriceResponseStream =
-    Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<MarkPriceStreamPayload>>> + Send>>;
+pub type TotalSymbolBookTickerResponseStream =
+    Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<SymbolBookTickerPayload>>> + Send>>;
 
-pub struct AllMarkPriceClient {
-    websocket_client: WebsocketClient<AllMarkPriceStream>,
+pub struct TotalSymbolBookTickerClient {
+    websocket_client: WebsocketClient<TotalSymbolBookTickerStream>,
 }
 #[async_trait]
-impl BinanceWebsocketAdaptor for AllMarkPriceClient
-{
-    type CLIENT = AllMarkPriceClient;
-    type INPUT = AllMarkPriceStream;
-    type OUTPUT = MarkPriceStreamPayload;
+impl BinanceWebsocketAdaptor for TotalSymbolBookTickerClient {
+    type CLIENT = TotalSymbolBookTickerClient;
+    type INPUT = TotalSymbolBookTickerStream;
+    type OUTPUT = SymbolBookTickerPayload;
 
     async fn create_client<P>(process: P, uri: &str) -> Self::CLIENT
     where
         P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static ,
     {
         let (client, payload_receiver) =
-            WebsocketClient::<AllMarkPriceStream>::new_with_uri::<MarkPriceStreamPayload>(uri).await;
+            WebsocketClient::<TotalSymbolBookTickerStream>::new_with_uri::<SymbolBookTickerPayload>(uri).await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
             payload_receiver,
         ));
-        tokio::spawn(all_mark_price_payload_process(trade_stream, process));
-        AllMarkPriceClient {
+        tokio::spawn(total_symbol_book_ticker_payload_process(trade_stream, process));
+        TotalSymbolBookTickerClient {
             websocket_client: client,
         }
     }
+
 
     async fn close(self) {
         self.websocket_client.close().await
@@ -72,17 +73,18 @@ impl BinanceWebsocketAdaptor for AllMarkPriceClient
         self.websocket_client
             .get_all_subscribers()
             .iter()
-            .map(|item|item.clone())
+            .map(|item| item.clone())
             .collect()
     }
 }
 
-pub(crate) async fn all_mark_price_payload_process<P>(
-    trade_response_stream: AllMarkPriceResponseStream,
+pub(crate) async fn total_symbol_book_ticker_payload_process<P>(
+    trade_response_stream: TotalSymbolBookTickerResponseStream,
     mut processor: P,
 ) where
-    P: SocketPayloadProcess<MarkPriceStreamPayload> + Send + 'static,
+    P: SocketPayloadProcess<SymbolBookTickerPayload> + Send + 'static,
 {
     processor.process(trade_response_stream).await;
 }
-// todo test
+
+// todo

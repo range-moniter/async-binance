@@ -36,13 +36,13 @@ impl StreamNameFormat for MarkPriceStream {
 
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct AllMarkPriceStream {
+pub struct TotalMarkPriceStream {
     is_second: bool,
 }
 
-impl AllMarkPriceStream {
-    pub fn new(is_second: bool) -> AllMarkPriceStream {
-        AllMarkPriceStream {  is_second }
+impl TotalMarkPriceStream {
+    pub fn new(is_second: bool) -> TotalMarkPriceStream {
+        TotalMarkPriceStream {  is_second }
     }
     pub fn is_second(&self) -> bool {
         self.is_second
@@ -50,7 +50,7 @@ impl AllMarkPriceStream {
 }
 
 
-impl StreamNameFormat for AllMarkPriceStream {
+impl StreamNameFormat for TotalMarkPriceStream {
     fn stream_name(&self) -> String {
         if self.is_second {
             "!markPrice@arr".to_string()

@@ -25,6 +25,15 @@ impl StreamNameFormat for SymbolBookTickerStream {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct TotalSymbolBookTickerStream;
+
+impl StreamNameFormat for TotalSymbolBookTickerStream {
+    fn stream_name(&self) -> String {
+        "!bookTicker".to_string()
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SymbolBookTickerPayload {
 

@@ -1,4 +1,3 @@
-use crate::market::types::symbol_ticker::{AllSymbolTickerPayload, AllSymbolTickerStream};
 use async_trait::async_trait;
 use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
@@ -7,25 +6,26 @@ use client::stream::stream::SocketPayloadProcess;
 use futures_util::Stream;
 use general::result::BinanceResult;
 use std::pin::Pin;
+use crate::market::types::symbol_ticker::{TotalSymbolTickerPayload, TotalSymbolTickerStream};
 
-pub type AllSymbolTickerResponseStream =
-Pin<Box<dyn Stream<Item=BinanceResult<SocketPayloadActor<AllSymbolTickerPayload>>> + Send>>;
+pub type TotalSymbolTickerResponseStream =
+Pin<Box<dyn Stream<Item=BinanceResult<SocketPayloadActor<TotalSymbolTickerPayload>>> + Send>>;
 
 pub struct AllSymbolTickerClient {
-    websocket_client: WebsocketClient<AllSymbolTickerStream>,
+    websocket_client: WebsocketClient<TotalSymbolTickerStream>,
 }
 #[async_trait]
 impl BinanceWebsocketAdaptor for AllSymbolTickerClient {
     type CLIENT = AllSymbolTickerClient;
-    type INPUT = AllSymbolTickerStream;
-    type OUTPUT = AllSymbolTickerPayload;
+    type INPUT = TotalSymbolTickerStream;
+    type OUTPUT = TotalSymbolTickerPayload;
 
     async fn create_client<P>(process: P, uri: &str) -> Self::CLIENT
     where
         P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static,
     {
         let (client, payload_receiver) =
-            WebsocketClient::<AllSymbolTickerStream>::new_with_uri::<AllSymbolTickerPayload>(uri).await;
+            WebsocketClient::<TotalSymbolTickerStream>::new_with_uri::<TotalSymbolTickerPayload>(uri).await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
             payload_receiver,
         ));
@@ -76,10 +76,10 @@ impl BinanceWebsocketAdaptor for AllSymbolTickerClient {
     }
 }
 pub(crate) async fn all_symbol_ticker_payload_process<P>(
-    trade_response_stream: AllSymbolTickerResponseStream,
+    trade_response_stream: TotalSymbolTickerResponseStream,
     mut processor: P,
 ) where
-    P: SocketPayloadProcess<AllSymbolTickerPayload> + Send + 'static,
+    P: SocketPayloadProcess<TotalSymbolTickerPayload> + Send + 'static,
 {
     processor.process(trade_response_stream).await;
 }
