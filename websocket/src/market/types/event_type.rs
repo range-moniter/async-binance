@@ -22,4 +22,8 @@ pub enum EventType {
     Trade,
     #[serde(rename = "kline")]
     Kline,
+    #[serde(rename = "markPriceUpdate")]
+    MarkPrice,
+    #[serde(rename = "continuous_kline")]
+    ContinuousKline,
 }

@@ -11,3 +11,5 @@ pub mod ticker_ct;
 pub mod trade_ct;
 pub mod mark_price_ct;
 pub mod all_mark_price_ct;
+pub mod continuous_kline_ct;
+pub mod all_ticker_ct;

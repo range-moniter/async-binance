@@ -10,3 +10,4 @@ pub mod general;
 pub mod rate_limiter;
 pub mod query_type;
 pub mod symbol_filter;
+pub mod contract_type;

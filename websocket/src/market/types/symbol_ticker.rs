@@ -26,13 +26,16 @@ impl StreamNameFormat for SymbolTickerStream {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct AllSymbolTicker;
+pub struct AllSymbolTickerStream;
 
-impl StreamNameFormat for AllSymbolTicker {
+impl StreamNameFormat for AllSymbolTickerStream {
     fn stream_name(&self) -> String {
         "!ticker@arr".to_string()
     }
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AllSymbolTickerPayload(Vec<SymbolTickerPayload>);
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SymbolTickerPayload {
@@ -82,43 +85,4 @@ pub struct SymbolTickerPayload {
     pub last_trade_id: u64,
     #[serde(rename = "n")]
     pub total_trade_count: u64,
-}
-
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn deserialize() {
-        let data = r#"
-            {
-                "e": "24hrTicker",
-                "E": 1672515782136,
-                "s": "BNBBTC",
-                "p": "0.0015",
-                "P": "250.00",
-                "w": "0.0018",
-                "x": "0.0009",
-                "c": "0.0025",
-                "Q": "10",
-                "b": "0.0024",
-                "B": "10",
-                "a": "0.0026",
-                "A": "100",
-                "o": "0.0010",
-                "h": "0.0025",
-                "l": "0.0010",
-                "v": "10000",
-                "q": "18",
-                "O": 0,
-                "C": 86400000,
-                "F": 0,
-                "L": 18150,
-                "n": 18151
-            }
-        "#;
-
-        let payload: SymbolTickerPayload = serde_json::from_str(data).unwrap();
-        println!("{:#?}", payload);
-    }
 }
