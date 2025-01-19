@@ -15,3 +15,5 @@ pub mod continuous_kline_ct;
 pub mod ticker_total_ct;
 pub mod mini_ticker_total_ct;
 pub mod book_ticker_total_ct;
+pub mod liquidation_order_total_ct;
+pub mod liquidation_order_ct;

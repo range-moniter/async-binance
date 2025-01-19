@@ -26,4 +26,6 @@ pub enum EventType {
     MarkPrice,
     #[serde(rename = "continuous_kline")]
     ContinuousKline,
+    #[serde(rename = "forceOrder")]
+    ForceOrder,
 }
