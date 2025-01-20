@@ -8,6 +8,7 @@ use general::enums::speed::Speed;
 use general::symbol::Symbol;
 use std::time::Duration;
 use tokio::time::sleep;
+use websocket::market::types::contract_info::ContractInfoStream;
 use websocket::market::types::liquidation_order::TotalLiquidationOrderStream;
 use websocket::market::types::mark_price::TotalMarkPriceStream;
 use websocket::market::types::symbol_book_ticker::TotalSymbolBookTickerStream;
@@ -279,6 +280,19 @@ async fn usd_future_test_composite_index_symbol() {
     .await;
     client.subscribe_item(Symbol::new("BTCUSDT")).await;
     sleep(Duration::from_secs(30)).await;
+    client.close().await;
+    sleep(Duration::from_millis(5000)).await;
+    print!("over");
+}
+
+#[tokio::test]
+async fn usd_future_test_contract_info() {
+    Builder::from_default_env()
+    .filter(None, log::LevelFilter::Info)
+    .init();
+    let mut client = BinanceUsdFutureMarketWebsocketClient::contract_info(DefaultStreamPayloadProcess::new()).await;
+    client.subscribe_item(ContractInfoStream::default()).await;
+    sleep(Duration::from_secs(2)).await;
     client.close().await;
     sleep(Duration::from_millis(5000)).await;
     print!("over");

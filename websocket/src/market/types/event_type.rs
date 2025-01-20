@@ -28,4 +28,6 @@ pub enum EventType {
     ContinuousKline,
     #[serde(rename = "forceOrder")]
     ForceOrder,
+    #[serde(rename = "contractInfo")]
+    ContractInfo
 }

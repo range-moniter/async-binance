@@ -13,3 +13,4 @@ pub mod mark_price;
 pub mod continuous_kline;
 pub mod liquidation_order;
 pub mod composite_index_symbol;
+pub mod contract_info;

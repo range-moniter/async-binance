@@ -3,6 +3,7 @@ use crate::market::book_ticker_ct::SymbolBookTickerClient;
 use crate::market::book_ticker_total_ct::TotalSymbolBookTickerClient;
 use crate::market::composite_index_symbol_ct::CompositeIndexSymbolClient;
 use crate::market::continuous_kline_ct::ContinuousKlineClient;
+use crate::market::contract_info_ct::ContractInfoClient;
 use crate::market::depth_ct::DepthClient;
 use crate::market::kline_ct::KlineClient;
 use crate::market::liquidation_order_ct::LiquidationOrderClient;
@@ -18,6 +19,7 @@ use crate::market::ticker_total_ct::TotalSymbolTickerClient;
 use crate::market::types::agg_trade::AggTradeStreamPayload;
 use crate::market::types::composite_index_symbol::CompositionIndexSymbolStreamPayload;
 use crate::market::types::continuous_kline::ContinuousKlineStreamPayload;
+use crate::market::types::contract_info::ContractInfoStreamPayload;
 use crate::market::types::depth::DepthStreamPayload;
 use crate::market::types::kline::KlineStreamPayload;
 use crate::market::types::liquidation_order::LiquidationOrderStreamPayload;
@@ -152,5 +154,12 @@ impl BinanceUsdFutureMarketWebsocketClient {
         P: SocketPayloadProcess<CompositionIndexSymbolStreamPayload> + Send + 'static,
     {
         CompositeIndexSymbolClient::create_client(process, USD_FUTURE_SOCKET_URI).await
+    }
+
+    pub async fn contract_info<P>(process: P) -> ContractInfoClient
+    where
+        P: SocketPayloadProcess<ContractInfoStreamPayload> + Send + 'static,
+    {
+        ContractInfoClient::create_client(process, USD_FUTURE_SOCKET_URI).await
     }
 }
