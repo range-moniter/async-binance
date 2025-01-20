@@ -33,7 +33,7 @@ impl ContinuousKlineStream {
 
 impl StreamNameFormat for ContinuousKlineStream {
     fn stream_name(&self) -> String {
-        format!("{}_{:?}@continuousKline_{}", self.symbol.name, self.contract_type, self.interval.as_str())
+        format!("{}_{}@continuousKline_{}", self.symbol.name, self.contract_type.as_str(), self.interval.as_str())
     }
 }
 

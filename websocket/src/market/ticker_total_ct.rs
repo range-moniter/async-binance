@@ -11,12 +11,12 @@ use crate::market::types::symbol_ticker::{TotalSymbolTickerPayload, TotalSymbolT
 pub type TotalSymbolTickerResponseStream =
 Pin<Box<dyn Stream<Item=BinanceResult<SocketPayloadActor<TotalSymbolTickerPayload>>> + Send>>;
 
-pub struct AllSymbolTickerClient {
+pub struct TotalSymbolTickerClient {
     websocket_client: WebsocketClient<TotalSymbolTickerStream>,
 }
 #[async_trait]
-impl BinanceWebsocketAdaptor for AllSymbolTickerClient {
-    type CLIENT = AllSymbolTickerClient;
+impl BinanceWebsocketAdaptor for TotalSymbolTickerClient {
+    type CLIENT = TotalSymbolTickerClient;
     type INPUT = TotalSymbolTickerStream;
     type OUTPUT = TotalSymbolTickerPayload;
 
@@ -30,7 +30,7 @@ impl BinanceWebsocketAdaptor for AllSymbolTickerClient {
             payload_receiver,
         ));
         tokio::spawn(all_symbol_ticker_payload_process(trade_stream, process));
-        AllSymbolTickerClient {
+        TotalSymbolTickerClient {
             websocket_client: client,
         }
     }

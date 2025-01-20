@@ -8,7 +8,7 @@ use general::symbol::Symbol;
 pub struct SymbolMiniTickerStream {
     symbol: Symbol,
 }
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, Default)]
 pub struct TotalSymbolMiniTickerStream;
 
 impl SymbolMiniTickerStream {

@@ -25,7 +25,7 @@ impl StreamNameFormat for SymbolTickerStream {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, Default)]
 pub struct TotalSymbolTickerStream;
 
 impl StreamNameFormat for TotalSymbolTickerStream {
@@ -52,19 +52,19 @@ pub struct SymbolTickerPayload {
     #[serde(rename = "w")]
     pub average_price: BigDecimal,
     #[serde(rename = "x")]
-    pub first_trade_price: BigDecimal,
+    pub first_trade_price: Option<BigDecimal>,
     #[serde(rename = "c")]
     pub last_price: BigDecimal,
     #[serde(rename = "Q")]
     pub last_quantity: BigDecimal,
     #[serde(rename = "b")]
-    pub best_bid_price: BigDecimal,
+    pub best_bid_price: Option<BigDecimal>,
     #[serde(rename = "B")]
-    pub best_bid_quantity: BigDecimal,
+    pub best_bid_quantity: Option<BigDecimal>,
     #[serde(rename = "a")]
-    pub best_ask_price: BigDecimal,
+    pub best_ask_price: Option<BigDecimal>,
     #[serde(rename = "A")]
-    pub best_ask_quantity: BigDecimal,
+    pub best_ask_quantity: Option<BigDecimal>,
     #[serde(rename = "o")]
     pub open_price: BigDecimal,
     #[serde(rename = "h")]

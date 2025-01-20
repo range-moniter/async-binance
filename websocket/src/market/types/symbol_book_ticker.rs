@@ -25,7 +25,7 @@ impl StreamNameFormat for SymbolBookTickerStream {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, Default)]
 pub struct TotalSymbolBookTickerStream;
 
 impl StreamNameFormat for TotalSymbolBookTickerStream {

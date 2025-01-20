@@ -76,7 +76,10 @@ pub struct MarkPriceStreamPayload {
     #[serde(rename = "P")]
     pub estimated_settle_price: BigDecimal,
     #[serde(rename = "r")]
-    pub funding_rate: u64,
+    pub funding_rate: BigDecimal,
     #[serde(rename = "T")]
     pub next_funding_time: u64,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TotalMarkPriceStreamPayload(Vec<MarkPriceStreamPayload>);

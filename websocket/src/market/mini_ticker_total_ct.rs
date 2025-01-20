@@ -8,15 +8,15 @@ use futures_util::Stream;
 use general::result::BinanceResult;
 use std::pin::Pin;
 
-pub type AllMiniTickerResponseStream =
+pub type TotalMiniTickerResponseStream =
     Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<TotalSymbolMiniTickerPayload>>> + Send>>;
 
-pub struct AllSymbolMiniTickerClient {
+pub struct TotalSymbolMiniTickerClient {
     websocket_client: WebsocketClient<TotalSymbolMiniTickerStream>,
 }
 #[async_trait]
-impl BinanceWebsocketAdaptor for AllSymbolMiniTickerClient {
-    type CLIENT = AllSymbolMiniTickerClient;
+impl BinanceWebsocketAdaptor for TotalSymbolMiniTickerClient {
+    type CLIENT = TotalSymbolMiniTickerClient;
     type INPUT = TotalSymbolMiniTickerStream;
     type OUTPUT = TotalSymbolMiniTickerPayload;
 
@@ -30,7 +30,7 @@ impl BinanceWebsocketAdaptor for AllSymbolMiniTickerClient {
             payload_receiver,
         ));
         tokio::spawn(all_symbol_mini_ticker_payload_process(trade_stream, process));
-        AllSymbolMiniTickerClient {
+        TotalSymbolMiniTickerClient {
             websocket_client: client,
         }
     }
@@ -78,12 +78,10 @@ impl BinanceWebsocketAdaptor for AllSymbolMiniTickerClient {
 }
 
 pub(crate) async fn all_symbol_mini_ticker_payload_process<P>(
-    trade_response_stream: AllMiniTickerResponseStream,
+    trade_response_stream: TotalMiniTickerResponseStream,
     mut processor: P,
 ) where
     P: SocketPayloadProcess<TotalSymbolMiniTickerPayload> + Send + 'static,
 {
     processor.process(trade_response_stream).await;
 }
-
-//todo

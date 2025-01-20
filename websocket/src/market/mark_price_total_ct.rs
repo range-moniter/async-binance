@@ -6,32 +6,32 @@ use client::stream::stream::SocketPayloadProcess;
 use futures_util::Stream;
 use general::result::BinanceResult;
 use std::pin::Pin;
-use crate::market::types::mark_price::{TotalMarkPriceStream, MarkPriceStreamPayload};
+use crate::market::types::mark_price::{TotalMarkPriceStream, TotalMarkPriceStreamPayload};
 
 pub type TotalMarkPriceResponseStream =
-    Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<MarkPriceStreamPayload>>> + Send>>;
+    Pin<Box<dyn Stream<Item = BinanceResult<SocketPayloadActor<TotalMarkPriceStreamPayload>>> + Send>>;
 
-pub struct AllMarkPriceClient {
+pub struct MarkPriceTotalClient {
     websocket_client: WebsocketClient<TotalMarkPriceStream>,
 }
 #[async_trait]
-impl BinanceWebsocketAdaptor for AllMarkPriceClient
+impl BinanceWebsocketAdaptor for MarkPriceTotalClient
 {
-    type CLIENT = AllMarkPriceClient;
+    type CLIENT = MarkPriceTotalClient;
     type INPUT = TotalMarkPriceStream;
-    type OUTPUT = MarkPriceStreamPayload;
+    type OUTPUT = TotalMarkPriceStreamPayload;
 
     async fn create_client<P>(process: P, uri: &str) -> Self::CLIENT
     where
         P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static ,
     {
         let (client, payload_receiver) =
-            WebsocketClient::<TotalMarkPriceStream>::new_with_uri::<MarkPriceStreamPayload>(uri).await;
+            WebsocketClient::<TotalMarkPriceStream>::new_with_uri::<TotalMarkPriceStreamPayload>(uri).await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
             payload_receiver,
         ));
         tokio::spawn(total_mark_price_payload_process(trade_stream, process));
-        AllMarkPriceClient {
+        MarkPriceTotalClient {
             websocket_client: client,
         }
     }
@@ -81,8 +81,7 @@ pub(crate) async fn total_mark_price_payload_process<P>(
     trade_response_stream: TotalMarkPriceResponseStream,
     mut processor: P,
 ) where
-    P: SocketPayloadProcess<MarkPriceStreamPayload> + Send + 'static,
+    P: SocketPayloadProcess<TotalMarkPriceStreamPayload> + Send + 'static,
 {
     processor.process(trade_response_stream).await;
 }
-// todo test
