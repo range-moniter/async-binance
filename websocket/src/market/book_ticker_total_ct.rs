@@ -1,4 +1,4 @@
-use crate::market::types::symbol_book_ticker::{SymbolBookTickerPayload, SymbolBookTickerStream, TotalSymbolBookTickerStream};
+use crate::market::types::symbol_book_ticker::{SymbolBookTickerPayload, TotalSymbolBookTickerStream};
 use async_trait::async_trait;
 use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
@@ -6,7 +6,6 @@ use client::stream::payload::SocketPayloadActor;
 use client::stream::stream::SocketPayloadProcess;
 use futures_util::Stream;
 use general::result::BinanceResult;
-use general::symbol::Symbol;
 use std::pin::Pin;
 
 pub type TotalSymbolBookTickerResponseStream =

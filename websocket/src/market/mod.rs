@@ -18,3 +18,4 @@ pub mod book_ticker_total_ct;
 pub mod liquidation_order_total_ct;
 pub mod liquidation_order_ct;
 pub mod partial_depth_ct;
+pub mod composite_index_symbol_ct;

@@ -12,3 +12,4 @@ pub mod event_type;
 pub mod mark_price;
 pub mod continuous_kline;
 pub mod liquidation_order;
+pub mod composite_index_symbol;

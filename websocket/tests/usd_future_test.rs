@@ -4,10 +4,10 @@ use env_logger::Builder;
 use general::enums::contract_type::ContractType;
 use general::enums::interval::Interval;
 use general::enums::level::Level;
+use general::enums::speed::Speed;
 use general::symbol::Symbol;
 use std::time::Duration;
 use tokio::time::sleep;
-use general::enums::speed::Speed;
 use websocket::market::types::liquidation_order::TotalLiquidationOrderStream;
 use websocket::market::types::mark_price::TotalMarkPriceStream;
 use websocket::market::types::symbol_book_ticker::TotalSymbolBookTickerStream;
@@ -199,8 +199,7 @@ async fn usd_future_test_all_symbol_book_ticker() {
     sleep(Duration::from_millis(5000)).await;
     print!("over");
 }
-//    <symbol>@forceOrder
-//    btcusdt@forceOrder
+
 #[tokio::test]
 async fn usd_future_test_liquidation_order() {
     Builder::from_default_env()
@@ -258,9 +257,28 @@ async fn usd_future_test_diff_book_depth() {
     Builder::from_default_env()
         .filter(None, log::LevelFilter::Info)
         .init();
-    let mut client = BinanceUsdFutureMarketWebsocketClient::diff_book_depth(DefaultStreamPayloadProcess::new()).await;
+    let mut client =
+        BinanceUsdFutureMarketWebsocketClient::diff_book_depth(DefaultStreamPayloadProcess::new())
+            .await;
     client.subscribe_item((Symbol::new("ETHUSDT"), None)).await;
     sleep(Duration::from_secs(2)).await;
+    client.close().await;
+    sleep(Duration::from_millis(5000)).await;
+    print!("over");
+}
+
+
+#[tokio::test]
+async fn usd_future_test_composite_index_symbol() {
+    Builder::from_default_env()
+        .filter(None, log::LevelFilter::Info)
+        .init();
+    let mut client = BinanceUsdFutureMarketWebsocketClient::composite_index_symbol(
+        DefaultStreamPayloadProcess::new(),
+    )
+    .await;
+    client.subscribe_item(Symbol::new("BTCUSDT")).await;
+    sleep(Duration::from_secs(30)).await;
     client.close().await;
     sleep(Duration::from_millis(5000)).await;
     print!("over");

@@ -1,43 +1,40 @@
+use std::pin::Pin;
 use async_trait::async_trait;
+use futures_util::Stream;
 use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::client::WebsocketClient;
 use client::stream::payload::SocketPayloadActor;
 use client::stream::stream::SocketPayloadProcess;
-use futures_util::Stream;
-use general::enums::interval::Interval;
 use general::result::BinanceResult;
 use general::symbol::Symbol;
-use std::pin::Pin;
-use general::enums::contract_type::ContractType;
-use crate::market::types::continuous_kline::{ContinuousKlineStream, ContinuousKlineStreamPayload};
+use crate::market::types::composite_index_symbol::{CompositionIndexSymbolStream, CompositionIndexSymbolStreamPayload};
 
-pub type CompositionIndexSymbolResponseStream =
-Pin<Box<dyn Stream<Item=BinanceResult<SocketPayloadActor<ContinuousKlineStreamPayload>>> + Send>>;
+pub type CompositeIndexSymbolResponseStream =
+Pin<Box<dyn Stream<Item=BinanceResult<SocketPayloadActor<CompositionIndexSymbolStreamPayload>>> + Send>>;
 
-pub struct ContinuousKlineClient {
-    websocket_client: WebsocketClient<ContinuousKlineStream>,
+pub struct CompositeIndexSymbolClient {
+    websocket_client: WebsocketClient<CompositionIndexSymbolStream>,
 }
 #[async_trait]
-impl BinanceWebsocketAdaptor for ContinuousKlineClient {
-    type CLIENT = ContinuousKlineClient;
-    type INPUT = (Symbol, ContractType, Interval);
-    type OUTPUT = ContinuousKlineStreamPayload;
+impl BinanceWebsocketAdaptor for CompositeIndexSymbolClient {
+    type CLIENT = CompositeIndexSymbolClient;
+    type INPUT = Symbol;
+    type OUTPUT = CompositionIndexSymbolStreamPayload;
 
     async fn create_client<P>(process: P, uri: &str) -> Self::CLIENT
     where
-        P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static,
+        P: SocketPayloadProcess<Self::OUTPUT> + Send + 'static
     {
         let (client, payload_receiver) =
-            WebsocketClient::<ContinuousKlineStream>::new_with_uri::<ContinuousKlineStreamPayload>(uri).await;
+            WebsocketClient::<CompositionIndexSymbolStream>::new_with_uri::<CompositionIndexSymbolStreamPayload>(uri).await;
         let trade_stream = Box::pin(tokio_stream::wrappers::UnboundedReceiverStream::new(
             payload_receiver,
         ));
-        tokio::spawn(continuous_kline_payload_process(trade_stream, process));
-        ContinuousKlineClient {
+        tokio::spawn(composite_index_symbol_payload_process(trade_stream, process));
+        CompositeIndexSymbolClient {
             websocket_client: client,
         }
     }
-
 
     async fn close(self) {
         self.websocket_client.close().await
@@ -45,7 +42,7 @@ impl BinanceWebsocketAdaptor for ContinuousKlineClient {
 
     async fn subscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .subscribe_single(ContinuousKlineStream::new(input.0, input.1, input.2))
+            .subscribe_single(CompositionIndexSymbolStream::new(input))
             .await
             .unwrap();
     }
@@ -53,7 +50,7 @@ impl BinanceWebsocketAdaptor for ContinuousKlineClient {
     async fn subscribe_items(&mut self, input: Vec<Self::INPUT>) {
         let params = input
             .into_iter()
-            .map(|(symbol, contract_type, interval)| ContinuousKlineStream::new(symbol, contract_type, interval))
+            .map(|symbol| CompositionIndexSymbolStream::new(symbol))
             .collect::<Vec<_>>();
         self.websocket_client
             .subscribe_multiple(params)
@@ -63,7 +60,7 @@ impl BinanceWebsocketAdaptor for ContinuousKlineClient {
 
     async fn unsubscribe_item(&mut self, input: Self::INPUT) {
         self.websocket_client
-            .unsubscribe_single(ContinuousKlineStream::new(input.0, input.1, input.2))
+            .unsubscribe_single(CompositionIndexSymbolStream::new(input))
             .await
             .unwrap();
     }
@@ -71,8 +68,8 @@ impl BinanceWebsocketAdaptor for ContinuousKlineClient {
     async fn unsubscribe_items(&mut self, input: Vec<Self::INPUT>) {
         let params = input
             .into_iter()
-            .map(|(symbol, contract_type, interval)| ContinuousKlineStream::new(symbol, contract_type, interval))
-            .collect::<Vec<ContinuousKlineStream>>();
+            .map(|symbol| CompositionIndexSymbolStream::new(symbol))
+            .collect::<Vec<CompositionIndexSymbolStream>>();
         self.websocket_client
             .unsubscribe_multiple(params)
             .await
@@ -84,21 +81,18 @@ impl BinanceWebsocketAdaptor for ContinuousKlineClient {
             .get_all_subscribers()
             .iter()
             .map(|item| {
-                (
-                    item.get_symbol(),
-                    item.get_contract_type(),
-                    item.get_interval()
-                )
+                item.get_symbol()
             })
             .collect()
     }
 }
 
-pub(crate) async fn continuous_kline_payload_process<P>(
-    trade_response_stream: CompositionIndexSymbolResponseStream,
+
+pub(crate) async fn composite_index_symbol_payload_process<P>(
+    trade_response_stream: CompositeIndexSymbolResponseStream,
     mut processor: P,
 ) where
-    P: SocketPayloadProcess<ContinuousKlineStreamPayload> + Send + 'static,
+    P: SocketPayloadProcess<CompositionIndexSymbolStreamPayload> + Send + 'static,
 {
     processor.process(trade_response_stream).await;
 }
