@@ -6,6 +6,7 @@ use general::enums::interval::Interval;
 use general::symbol::Symbol;
 use std::time::Duration;
 use tokio::time::sleep;
+use websocket::market::types::liquidation_order::TotalLiquidationOrderStream;
 use websocket::market::types::mark_price::TotalMarkPriceStream;
 use websocket::market::types::symbol_book_ticker::TotalSymbolBookTickerStream;
 use websocket::market::types::symbol_mini_ticker::TotalSymbolMiniTickerStream;
@@ -19,8 +20,8 @@ async fn usd_future_test_agg_trade() {
         .init();
     let mut client =
         BinanceUsdFutureMarketWebsocketClient::agg_trade(DefaultStreamPayloadProcess::new()).await;
-    let ban_handle = client.subscribe_item(Symbol::new("BANUSDT")).await;
-    let bb_handle = client.subscribe_item(Symbol::new("BBUSDT")).await;
+    client.subscribe_item(Symbol::new("BANUSDT")).await;
+    client.subscribe_item(Symbol::new("BBUSDT")).await;
     sleep(Duration::from_millis(10000)).await;
     client.close().await;
     sleep(Duration::from_millis(2000)).await;
@@ -168,7 +169,10 @@ async fn usd_future_test_symbol_book_ticker() {
     Builder::from_default_env()
         .filter(None, log::LevelFilter::Info)
         .init();
-    let mut client = BinanceUsdFutureMarketWebsocketClient::symbol_book_ticker(DefaultStreamPayloadProcess::new()).await;
+    let mut client = BinanceUsdFutureMarketWebsocketClient::symbol_book_ticker(
+        DefaultStreamPayloadProcess::new(),
+    )
+    .await;
     client.subscribe_item(Symbol::new("BBUSDT")).await;
     sleep(Duration::from_secs(3)).await;
     client.close().await;
@@ -179,12 +183,52 @@ async fn usd_future_test_symbol_book_ticker() {
 #[tokio::test]
 async fn usd_future_test_all_symbol_book_ticker() {
     Builder::from_default_env()
-    .filter(None, log::LevelFilter::Info)
-    .init();
-    let mut client = BinanceUsdFutureMarketWebsocketClient::symbol_book_ticker_total(DefaultStreamPayloadProcess::new()).await;
-    client.subscribe_item(TotalSymbolBookTickerStream::default()).await;
+        .filter(None, log::LevelFilter::Info)
+        .init();
+    let mut client = BinanceUsdFutureMarketWebsocketClient::symbol_book_ticker_total(
+        DefaultStreamPayloadProcess::new(),
+    )
+    .await;
+    client
+        .subscribe_item(TotalSymbolBookTickerStream::default())
+        .await;
     sleep(Duration::from_secs(3)).await;
     client.close().await;
     sleep(Duration::from_millis(5000)).await;
     print!("over");
+}
+//    <symbol>@forceOrder
+//    btcusdt@forceOrder
+#[tokio::test]
+async fn usd_future_test_liquidation_order() {
+    Builder::from_default_env()
+        .filter(None, log::LevelFilter::Info)
+        .init();
+    let mut client = BinanceUsdFutureMarketWebsocketClient::liquidation_order(
+        DefaultStreamPayloadProcess::new(),
+    )
+    .await;
+    client.subscribe_item(Symbol::new("USUALUSDT")).await;
+    sleep(Duration::from_secs(20)).await;
+    client.close().await;
+    sleep(Duration::from_millis(5000)).await;
+    print!("over");
+}
+
+#[tokio::test]
+async fn usd_future_test_total_liquidation_order() {
+    Builder::from_default_env()
+        .filter(None, log::LevelFilter::Info)
+        .init();
+    let mut client = BinanceUsdFutureMarketWebsocketClient::liquidation_order_total(
+        DefaultStreamPayloadProcess::new(),
+    )
+    .await;
+    client
+        .subscribe_item(TotalLiquidationOrderStream::default())
+        .await;
+    sleep(Duration::from_secs(20)).await;
+    client.close().await;
+    sleep(Duration::from_millis(5000)).await;
+    print!("over")
 }

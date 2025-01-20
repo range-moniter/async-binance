@@ -37,8 +37,11 @@ impl StreamNameFormat for TotalLiquidationOrderStream {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct LiquidationOrderStreamPayload {
+    #[serde(rename = "e")]
     pub event_type: EventType,
+    #[serde(rename = "E")]
     pub event_time: u64,
+    #[serde(rename = "o")]
     pub payload: LiquidationOrderItem
 }
 
