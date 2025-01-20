@@ -94,36 +94,3 @@ pub(crate) async fn depth_payload_process<P>(
 {
     processor.process(trade_response_stream).await;
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use client::stream::stream::DefaultStreamPayloadProcess;
-    use env_logger::Builder;
-    use std::time::Duration;
-    use tokio::time::sleep;
-    use crate::spot_market_socket_ct::BinanceSpotMarketWebsocketClient;
-
-    #[tokio::test]
-    async fn test_average_price() {
-        Builder::from_default_env()
-            .filter(None, log::LevelFilter::Debug)
-            .init();
-
-        let mut book_depth_client = BinanceSpotMarketWebsocketClient::depth(DefaultStreamPayloadProcess::new()).await;
-
-        book_depth_client.subscribe_item((Symbol::new("ARKUSDT"), None)).await;
-
-        sleep(Duration::from_secs(15)).await;
-
-        book_depth_client.subscribe_item((Symbol::new("FILUSDT"), None)).await;
-
-        sleep(Duration::from_secs(20)).await;
-
-        println!("send close message");
-
-        book_depth_client.close().await;
-
-        sleep(Duration::from_secs(200)).await;
-    }
-}

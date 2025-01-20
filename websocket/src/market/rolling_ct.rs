@@ -94,39 +94,3 @@ pub(crate) async fn symbol_rolling_payload_process<P>(
 {
     processor.process(trade_response_stream).await;
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use client::stream::stream::DefaultStreamPayloadProcess;
-    use env_logger::Builder;
-    use std::time::Duration;
-    use tokio::time::sleep;
-    use crate::spot_market_socket_ct::BinanceSpotMarketWebsocketClient;
-
-    #[tokio::test]
-    async fn test_average_price() {
-        Builder::from_default_env()
-            .filter(None, log::LevelFilter::Debug)
-            .init();
-
-        let mut symbol_rolling_client = BinanceSpotMarketWebsocketClient::symbol_rolling_ticker(DefaultStreamPayloadProcess::new()).await;
-
-        symbol_rolling_client
-            .subscribe_item((Symbol::new("ARKUSDT"), WindowSize::FourHours))
-            .await;
-
-        sleep(Duration::from_secs(15)).await;
-
-        symbol_rolling_client
-            .subscribe_item((Symbol::new("FILUSDT"), WindowSize::FourHours))
-            .await;
-        sleep(Duration::from_secs(20)).await;
-
-        println!("send close message");
-
-        symbol_rolling_client.close().await;
-
-        sleep(Duration::from_secs(200)).await;
-    }
-}

@@ -35,7 +35,7 @@ impl StreamNameFormat for KlineStream {
     fn stream_name(&self) -> String {
         match &self.timezone {
             None => format!("{}@kline_{}", self.symbol.name, self.kline_type.as_str()),
-            Some(timezone) => format!("{}@kline_{}", self.symbol.name, timezone.as_str()),
+            Some(timezone) => format!("{}@kline_{}@{}", self.symbol.name, self.kline_type.as_str(), timezone.as_str()),
         }
 
     }

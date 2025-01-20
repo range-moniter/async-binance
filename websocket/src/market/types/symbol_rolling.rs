@@ -12,7 +12,7 @@ pub struct SymbolRollingWindowStream {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct AllSymbolRollingStream{
+pub struct TotalSymbolRollingStream{
     window_size: WindowSize,
 }
 
@@ -31,9 +31,13 @@ impl SymbolRollingWindowStream {
 }
 
 
-impl AllSymbolRollingStream {
+impl TotalSymbolRollingStream {
     pub fn new(window_size: WindowSize) -> Self {
         Self { window_size }
+    }
+
+    pub fn get_window_size(&self) -> WindowSize {
+        self.window_size.clone()
     }
 }
 impl StreamNameFormat for SymbolRollingWindowStream {
@@ -43,7 +47,7 @@ impl StreamNameFormat for SymbolRollingWindowStream {
 }
 
 
-impl StreamNameFormat for AllSymbolRollingStream {
+impl StreamNameFormat for TotalSymbolRollingStream {
     fn stream_name(&self) -> String {
         format!("!ticker_{}@arr", self.window_size.as_str())
     }
@@ -86,3 +90,6 @@ pub struct SymbolRollingPayload {
     #[serde(rename = "n")]
     pub total_trade_number: u64,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TotalSymbolRollingPayload(Vec<SymbolRollingPayload>);

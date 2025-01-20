@@ -102,35 +102,3 @@ pub(crate) async fn kline_payload_process<P>(
 {
     processor.process(trade_response_stream).await;
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use client::stream::stream::DefaultStreamPayloadProcess;
-    use env_logger::Builder;
-    use std::time::Duration;
-    use tokio::time::sleep;
-    use crate::spot_market_socket_ct::BinanceSpotMarketWebsocketClient;
-
-    #[tokio::test]
-    async fn test_average_price() {
-        Builder::from_default_env()
-            .filter(None, log::LevelFilter::Debug)
-            .init();
-
-        let mut kline_client = BinanceSpotMarketWebsocketClient::kline(DefaultStreamPayloadProcess::new()).await;
-
-        kline_client
-            .subscribe_item((Symbol::new("ARKUSDT"), Interval::Minute1, None))
-            .await;
-
-        sleep(Duration::from_secs(20)).await;
-
-        kline_client
-            .subscribe_item((Symbol::new("FILUSDT"), Interval::Second1, None))
-            .await;
-        kline_client.close().await;
-
-        sleep(Duration::from_secs(20)).await;
-    }
-}

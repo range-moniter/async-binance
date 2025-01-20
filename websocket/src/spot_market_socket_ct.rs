@@ -1,5 +1,3 @@
-use client::stream::adaptor::BinanceWebsocketAdaptor;
-use client::stream::stream::SocketPayloadProcess;
 use crate::market::agg_trade_ct::AggTradeClient;
 use crate::market::avg_price_ct::AveragePriceClient;
 use crate::market::book_depth_ct::BookDepthClient;
@@ -7,8 +5,11 @@ use crate::market::book_ticker_ct::SymbolBookTickerClient;
 use crate::market::depth_ct::DepthClient;
 use crate::market::kline_ct::KlineClient;
 use crate::market::mini_ticker_ct::SymbolMiniTickerClient;
+use crate::market::mini_ticker_total_ct::TotalSymbolMiniTickerClient;
 use crate::market::rolling_ct::SymbolRollingClient;
+use crate::market::rolling_total_ct::TotalSymbolRollingClient;
 use crate::market::ticker_ct::SymbolTickerClient;
+use crate::market::ticker_total_ct::TotalSymbolTickerClient;
 use crate::market::trade_ct::TradeClient;
 use crate::market::types::agg_trade::AggTradeStreamPayload;
 use crate::market::types::average_price::AveragePricePayload;
@@ -16,10 +17,16 @@ use crate::market::types::book_depth::BookDepthStreamPayload;
 use crate::market::types::depth::DepthStreamPayload;
 use crate::market::types::kline::KlineStreamPayload;
 use crate::market::types::symbol_book_ticker::SymbolBookTickerPayload;
-use crate::market::types::symbol_mini_ticker::SymbolMiniTickerPayload;
-use crate::market::types::symbol_rolling::SymbolRollingPayload;
-use crate::market::types::symbol_ticker::SymbolTickerPayload;
+use crate::market::types::symbol_mini_ticker::{
+    SymbolMiniTickerPayload, TotalSymbolMiniTickerPayload,
+};
+use crate::market::types::symbol_rolling::{
+    SymbolRollingPayload, TotalSymbolRollingPayload,
+};
+use crate::market::types::symbol_ticker::{SymbolTickerPayload, TotalSymbolTickerPayload};
 use crate::market::types::trade::TradeStreamPayload;
+use client::stream::adaptor::BinanceWebsocketAdaptor;
+use client::stream::stream::SocketPayloadProcess;
 
 pub struct BinanceSpotMarketWebsocketClient;
 
@@ -39,7 +46,6 @@ impl BinanceSpotMarketWebsocketClient {
         AggTradeClient::create_client(process, SPOT_SOCKET_URI).await
     }
 
-
     pub async fn average_price<P>(process: P) -> AveragePriceClient
     where
         P: SocketPayloadProcess<AveragePricePayload> + Send + 'static,
@@ -47,18 +53,18 @@ impl BinanceSpotMarketWebsocketClient {
         AveragePriceClient::create_client(process, SPOT_SOCKET_URI).await
     }
 
-    pub async fn book_depth<P>(process: P) -> BookDepthClient
-    where
-        P: SocketPayloadProcess<BookDepthStreamPayload> + Send + 'static,
-    {
-        BookDepthClient::create_client(process, SPOT_SOCKET_URI).await
-    }
-
-    pub async fn depth<P>(process: P) -> DepthClient
+    pub async fn diff_book_depth<P>(process: P) -> DepthClient
     where
         P: SocketPayloadProcess<DepthStreamPayload> + Send + 'static,
     {
         DepthClient::create_client(process, SPOT_SOCKET_URI).await
+    }
+
+    pub async fn partial_book_depth<P>(process: P) -> BookDepthClient
+    where
+        P: SocketPayloadProcess<BookDepthStreamPayload> + Send + 'static,
+    {
+        BookDepthClient::create_client(process, SPOT_SOCKET_URI).await
     }
 
     pub async fn kline<P>(process: P) -> KlineClient
@@ -82,6 +88,13 @@ impl BinanceSpotMarketWebsocketClient {
         SymbolMiniTickerClient::create_client(process, SPOT_SOCKET_URI).await
     }
 
+    pub async fn symbol_mini_ticker_total<P>(process: P) -> TotalSymbolMiniTickerClient
+    where
+        P: SocketPayloadProcess<TotalSymbolMiniTickerPayload> + Send + 'static,
+    {
+        TotalSymbolMiniTickerClient::create_client(process, SPOT_SOCKET_URI).await
+    }
+
     pub async fn symbol_rolling_ticker<P>(process: P) -> SymbolRollingClient
     where
         P: SocketPayloadProcess<SymbolRollingPayload> + Send + 'static,
@@ -89,11 +102,24 @@ impl BinanceSpotMarketWebsocketClient {
         SymbolRollingClient::create_client(process, SPOT_SOCKET_URI).await
     }
 
+    pub async fn symbol_rolling_ticker_total<P>(process: P) -> TotalSymbolRollingClient
+    where
+        P: SocketPayloadProcess<TotalSymbolRollingPayload> + Send + 'static,
+    {
+        TotalSymbolRollingClient::create_client(process, SPOT_SOCKET_URI).await
+    }
 
     pub async fn symbol_ticker<P>(process: P) -> SymbolTickerClient
     where
         P: SocketPayloadProcess<SymbolTickerPayload> + Send + 'static,
     {
         SymbolTickerClient::create_client(process, SPOT_SOCKET_URI).await
+    }
+
+    pub async fn symbol_ticker_total<P>(process: P) -> TotalSymbolTickerClient
+    where
+        P: SocketPayloadProcess<TotalSymbolTickerPayload> + Send + 'static,
+    {
+        TotalSymbolTickerClient::create_client(process, SPOT_SOCKET_URI).await
     }
 }
