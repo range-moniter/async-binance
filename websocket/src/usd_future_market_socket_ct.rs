@@ -1,7 +1,9 @@
 use crate::market::agg_trade_ct::AggTradeClient;
+use crate::market::book_depth_ct::BookDepthClient;
 use crate::market::book_ticker_ct::SymbolBookTickerClient;
 use crate::market::book_ticker_total_ct::TotalSymbolBookTickerClient;
 use crate::market::continuous_kline_ct::ContinuousKlineClient;
+use crate::market::depth_ct::DepthClient;
 use crate::market::kline_ct::KlineClient;
 use crate::market::liquidation_order_ct::LiquidationOrderClient;
 use crate::market::liquidation_order_total_ct::TotalLiquidationOrderClient;
@@ -14,6 +16,7 @@ use crate::market::ticker_ct::SymbolTickerClient;
 use crate::market::ticker_total_ct::TotalSymbolTickerClient;
 use crate::market::types::agg_trade::AggTradeStreamPayload;
 use crate::market::types::continuous_kline::ContinuousKlineStreamPayload;
+use crate::market::types::depth::DepthStreamPayload;
 use crate::market::types::kline::KlineStreamPayload;
 use crate::market::types::liquidation_order::LiquidationOrderStreamPayload;
 use crate::market::types::mark_price::{MarkPriceStreamPayload, TotalMarkPriceStreamPayload};
@@ -25,6 +28,8 @@ use crate::market::types::symbol_rolling::SymbolRollingPayload;
 use crate::market::types::symbol_ticker::{SymbolTickerPayload, TotalSymbolTickerPayload};
 use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::stream::SocketPayloadProcess;
+use crate::market::partial_depth_ct::PartialDepthClient;
+use crate::market::types::book_depth::BookDepthStreamPayload;
 
 const USD_FUTURE_SOCKET_URI: &str = "wss://fstream.binance.com/ws";
 
@@ -126,5 +131,19 @@ impl BinanceUsdFutureMarketWebsocketClient {
         P: SocketPayloadProcess<LiquidationOrderStreamPayload> + Send + 'static,
     {
         TotalLiquidationOrderClient::create_client(process, USD_FUTURE_SOCKET_URI).await
+    }
+
+    pub async fn diff_book_depth<P>(process: P) -> DepthClient
+    where
+        P: SocketPayloadProcess<DepthStreamPayload> + Send + 'static,
+    {
+        DepthClient::create_client(process, USD_FUTURE_SOCKET_URI).await
+    }
+
+    pub async fn partial_book_depth<P>(process: P) -> PartialDepthClient
+    where
+        P: SocketPayloadProcess<DepthStreamPayload> + Send + 'static,
+    {
+        PartialDepthClient::create_client(process, USD_FUTURE_SOCKET_URI).await
     }
 }

@@ -31,6 +31,7 @@ impl StreamNameFormat for DepthStream {
         }
     }
 }
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DepthStreamPayload {
     #[serde(rename = "e")]
@@ -39,10 +40,14 @@ pub struct DepthStreamPayload {
     pub event_time: u64,
     #[serde(rename = "s")]
     pub symbol: String,
+    #[serde(rename = "T")]
+    pub transaction_time: Option<u64>,
+    #[serde(rename = "pu")]
+    pub final_update_id_in_stream: Option<u64>,
     #[serde(rename = "U")]
-    pub first_update_id: u32,
+    pub first_update_id: u64,
     #[serde(rename = "u")]
-    pub final_update_id: u32,
+    pub final_update_id: u64,
     #[serde(rename = "b")]
     pub bids: Vec<Vec<String>>,
     #[serde(rename = "a")]
