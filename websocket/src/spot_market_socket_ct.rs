@@ -32,6 +32,7 @@ pub struct BinanceSpotMarketWebsocketClient;
 
 const SPOT_SOCKET_URI: &str = "wss://stream.binance.com:9443/ws";
 impl BinanceSpotMarketWebsocketClient {
+    /// office doc(https://developers.binance.com/docs/binance-spot-api-docs/web-socket-streams#aggregate-trade-streams)
     pub async fn trade<P>(process: P) -> TradeClient
     where
         P: SocketPayloadProcess<TradeStreamPayload> + Send + 'static,
