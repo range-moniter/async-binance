@@ -13,17 +13,17 @@ use client::rest::client::{BinanceClient, BinanceClientAction};
 use client::rest::extension::RequestExtension;
 use general::result::BinanceResult;
 
-pub struct MarketClient<T> {
+pub struct SpotMarketClient<T> {
     client: T,
     domain: String,
 }
 
-impl<T> MarketClient<T>
+impl<T> SpotMarketClient<T>
 where
     T: BinanceClient + BinanceClientAction,
 {
-    pub fn new(client: T) -> MarketClient<T> {
-        MarketClient {
+    pub fn new(client: T) -> SpotMarketClient<T> {
+        SpotMarketClient {
             client,
             domain: "api.binance.com".to_string(),
         }
@@ -325,144 +325,5 @@ where
                 RequestExtension::none_auth_api(weight as u32),
             )
             .await
-    }
-}
-#[cfg(test)]
-mod tests {
-    use lazy_static::lazy_static;
-    use client::rest::config::Config;
-    use client::rest::rest_client::BinanceRestClient;
-    use super::*;
-    use crate::types::market::kline::KlineReq;
-    use general::enums::interval::Interval;
-
-
-    lazy_static!{
-        static ref CLIENT: MarketClient<BinanceRestClient> = MarketClient::new(BinanceRestClient::build_client(Config::new_default()));
-    }
-
-
-    #[tokio::test]
-    async fn test_get_exchange() {
-        let mut req = ExchangeReq::new();
-        req.set_symbol("BTCUSDT");
-        let resp = CLIENT.get_exchange(req).await;
-        println!("{:?}", resp);
-    }
-
-    #[tokio::test]
-    async fn test_get_order_book() {
-        let req = CommonReq::new("BTCUSDT", 1);
-        let resp = CLIENT.get_order_book(req).await;
-        println!("{:?}", resp);
-    }
-
-    #[tokio::test]
-    async fn test_get_recent_trade_list() {
-        let req = CommonReq::new("BTCUSDT", 500);
-        let resp = CLIENT.get_recent_trade_lists(req).await;
-        println!("{:?}", resp);
-    }
-
-    #[tokio::test]
-    async fn test_get_old_trade_list() {
-        let req = LookupTradeListReq::new("BTCUSDT");
-        let resp = CLIENT.get_old_trade_lists(req).await;
-        println!("{:?}", resp);
-    }
-
-    #[tokio::test]
-    async fn test_agg_trade_list() {
-        let req = AggTradeListReq::new("BTCUSDT");
-        let resp = CLIENT.get_agg_trade_list(req).await;
-        println!("{:?}", resp);
-    }
-
-    #[tokio::test]
-    async fn test_kline_candlestick() {
-        let req = KlineReq::new("BTCUSDT", Interval::Minute3);
-        let resp = CLIENT.get_kline(req).await;
-        println!("{:?}", resp);
-    }
-
-    #[tokio::test]
-    async fn test_ui_kline() {
-        let req = KlineReq::new("BTCUSDT", Interval::Minute3);
-        let resp = CLIENT.get_ui_kline(req).await;
-        println!("{:?}", resp);
-    }
-
-    #[tokio::test]
-    async fn test_avg_price() {
-        let req = AvgPriceReq::new("BTCUSDT");
-        let resp = CLIENT.get_avg_price(req).await;
-        println!("{:?}", resp);
-    }
-
-    #[tokio::test]
-    async fn test_get_price_ticker() {
-        let req = PriceChangeTickerReq::new_with_single("BTCUSDT");
-        let resp = CLIENT.get_price_ticker_24hr(req).await;
-        println!("{:?}", resp);
-    }
-
-    #[tokio::test]
-    async fn test_get_price_tickers() {
-        let req = PriceChangeTickerReq::new_with_multiple(vec!["BTCUSDT", "ETHUSDT"]);
-        let resp = CLIENT.get_price_tickers_24hr(req).await;
-        println!("{:?}", resp);
-    }
-
-    #[tokio::test]
-    async fn test_price_trade_day_ticker() {
-        let req = PriceTradeDayTickerReq::new_with_single("BTCUSDT");
-        let resp = CLIENT.get_trading_day_ticker(req).await;
-        println!("{:?}", resp);
-    }
-
-    #[tokio::test]
-    async fn test_price_trade_day_tickers() {
-        let req = PriceTradeDayTickerReq::new_with_multiple(vec!["BTCUSDT", "ETHUSDT"]);
-        let resp = CLIENT.get_trading_day_tickers(req).await;
-        println!("{:?}", resp);
-    }
-
-    #[tokio::test]
-    async fn test_get_symbol_price_ticker() {
-        let req = SymbolReq::new_with_single("BTCUSDT");
-        let resp = CLIENT.get_symbol_price_ticker(req).await;
-        println!("{:?}", resp);
-    }
-
-    #[tokio::test]
-    async fn test_get_symbol_price_tickers() {
-        let req = SymbolReq::new_with_multiple(vec!["BTCUSDT", "ETHUSDT"]);
-        let resp = CLIENT.get_symbol_price_tickers(req).await;
-        println!("{:?}", resp);
-    }
-
-    #[tokio::test]
-    async fn test_get_symbol_order_book_ticker() {
-        let req = SymbolReq::new_with_single("BTCUSDT");
-        let resp = CLIENT.get_symbol_order_book_ticker(req).await;
-        println!("{:?}", resp);
-    }
-    #[tokio::test]
-    async fn test_get_symbol_order_book_tickers() {
-        let req = SymbolReq::new_with_multiple(vec!["BTCUSDT", "ETHUSDT"]);
-        let resp = CLIENT.get_symbol_order_book_tickers(req).await;
-        println!("{:?}", resp);
-    }
-    #[tokio::test]
-    async fn test_get_rolling_window_price_change_static() {
-        let req = RollingWindowPriceChangeStatReq::new_with_single("BTCUSDT");
-        let resp = CLIENT.get_rolling_window_price_change_stat(req).await;
-        println!("{:?}", resp);
-    }
-    #[tokio::test]
-    async fn test_get_rolling_window_price_change_statics() {
-        let req = RollingWindowPriceChangeStatReq::new_with_multiple(vec!["BTCUSDT", "ETHUSDT"]);
-        let resp = CLIENT.get_rolling_window_price_change_stats(req).await;
-        println!("{:?}", resp);
     }
 }

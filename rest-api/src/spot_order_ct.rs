@@ -15,17 +15,17 @@ use client::rest::extension::RequestExtension;
 use client::rest::layer::authorization::types::{AuthType, Certificate};
 use general::result::BinanceResult;
 
-pub struct OrderClient<T> {
+pub struct SpotOrderClient<T> {
     client: T,
     domain: String,
 }
 
-impl<T> OrderClient<T>
+impl<T> SpotOrderClient<T>
 where
     T: BinanceClient + BinanceClientAction,
 {
     pub fn new(client: T) -> Self {
-        OrderClient {
+        SpotOrderClient {
             client,
             domain: "api.binance.com".to_string(),
         }
@@ -229,73 +229,5 @@ where
             self.domain.as_str(),
             RequestExtension::auth_order_api(AuthType::Trade, 1, certificate, uid),
         ).await
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::types::order::general::create::CreateOrderReqBuilder;
-    use bigdecimal::{BigDecimal, FromPrimitive};
-    use client::rest::config::Config;
-    use client::rest::rest_client::BinanceRestClient;
-    use general::enums::general::TimeInForce;
-    use general::enums::order::{OrderSide, OrderType};
-    use lazy_static::lazy_static;
-
-    lazy_static! {
-        static ref CLIENT: OrderClient<BinanceRestClient> =
-            OrderClient::new(BinanceRestClient::build_client(Config::new_default()));
-        static ref CERTIFICATE: Certificate = Certificate::new(
-            "rmooMuqIeGnNzv6MFwZZgIZsAkxa4Aykdb0eZAj0qNZ8EEhapAoczIoGPrTXxNte",
-            "F4LZhhANd5C4DOMh060r6ERwHflbaOezxjjVqfJfZraifExCOnBMra0jwOROpEA0"
-        );
-    }
-    #[tokio::test]
-    async fn test_create_order() {
-        let req = CreateOrderReqBuilder::new_builder()
-            .symbol("DOGEUSDT")
-            .side(OrderSide::BUY)
-            .order_type(OrderType::LIMIT)
-            .time_in_force(TimeInForce::GTC)
-            .quantity(BigDecimal::from_f32(10.0).unwrap().with_scale(2))
-            .price(BigDecimal::from_f32(0.4).unwrap().with_scale(4))
-            .build();
-        match req {
-            Ok(req) => {
-                let resp = CLIENT.create_order(req, CERTIFICATE.clone(), 0).await;
-                println!("{:?}", resp)
-            }
-            Err(err) => {
-                panic!("{:?}", err);
-            }
-        }
-    }
-    #[tokio::test]
-    async fn test_get_orders() {
-        let req = QueryOrderReq::new_with_order_id("DOGEUSDT", 7483831693);
-        let resp = CLIENT.get_orders(req, CERTIFICATE.clone()).await;
-        println!("{:?}", resp);
-    }
-
-    #[tokio::test]
-    async fn test_cancel_order() {
-        let req = CancelOrderReq::new_with_order_id("DOGEUSDT", 7483831693);
-        let resp = CLIENT.cancel_order(req, CERTIFICATE.clone(), 0).await;
-        println!("{:?}", resp);
-    }
-
-    #[tokio::test]
-    async fn test_get_all_orders() {
-        let req = QueryAllOrderReq::new("DOGEUSDT");
-        let resp = CLIENT.get_all_orders(req, CERTIFICATE.clone()).await;
-        println!("{:?}", resp);
-    }
-
-    #[tokio::test]
-    async fn test_get_open_orders() {
-        let req = QueryOpenOrderReq::new();
-        let resp = CLIENT.get_open_order_list(req, CERTIFICATE.clone()).await;
-        println!("{:?}", resp);
     }
 }
