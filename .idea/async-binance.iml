@@ -8,6 +8,8 @@
       <sourceFolder url="file://$MODULE_DIR$/general/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/rest-api/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/websocket/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rest-api/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/websocket/tests" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

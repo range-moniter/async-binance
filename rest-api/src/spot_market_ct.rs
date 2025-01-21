@@ -32,7 +32,7 @@ where
     pub async fn get_exchange(&self, request: ExchangeReq) -> BinanceResult<ExchangeResp> {
         self.client
             .get(
-                request,
+                Some(request),
                 "/api/v3/exchangeInfo",
                 self.domain.as_str(),
                 RequestExtension::none_auth_api(20),
@@ -52,7 +52,7 @@ where
         };
         self.client
             .get(
-                request,
+                Some(request),
                 "/api/v3/depth",
                 self.domain.as_str(),
                 RequestExtension::none_auth_api(weight),
@@ -66,7 +66,7 @@ where
     ) -> BinanceResult<Vec<TradeListResp>> {
         self.client
             .get_multiple(
-                request,
+                Some(request),
                 "/api/v3/trades",
                 self.domain.as_str(),
                 RequestExtension::none_auth_api(25),
@@ -80,7 +80,7 @@ where
     ) -> BinanceResult<Vec<TradeListResp>> {
         self.client
             .get_multiple(
-                request,
+                Some(request),
                 "/api/v3/historicalTrades",
                 self.domain.as_str(),
                 RequestExtension::none_auth_api(25),
@@ -94,7 +94,7 @@ where
     ) -> BinanceResult<Vec<AggTradeListResp>> {
         self.client
             .get(
-                request,
+                Some(request),
                 "/api/v3/aggTrades",
                 self.domain.as_str(),
                 RequestExtension::none_auth_api(2),
@@ -106,7 +106,7 @@ where
         let items: BinanceResult<Vec<KlineTupleResp>> = self
             .client
             .get_multiple(
-                request,
+                Some(request),
                 "/api/v3/klines",
                 self.domain.as_str(),
                 RequestExtension::none_auth_api(2),
@@ -119,7 +119,7 @@ where
         let items: BinanceResult<Vec<KlineTupleResp>> = self
             .client
             .get(
-                request,
+                Some(request),
                 "/api/v3/uiKlines",
                 self.domain.as_str(),
                 RequestExtension::none_auth_api(2),
@@ -131,7 +131,7 @@ where
     pub async fn get_avg_price(&self, request: AvgPriceReq) -> BinanceResult<AvgPriceResp> {
         self.client
             .get(
-                request,
+                Some(request),
                 "/api/v3/avgPrice",
                 self.domain.as_str(),
                 RequestExtension::none_auth_api(2),
@@ -148,7 +148,7 @@ where
         }
         self.client
             .get(
-                request,
+                Some(request),
                 "/api/v3/ticker/24hr",
                 self.domain.as_str(),
                 RequestExtension::none_auth_api(2),
@@ -173,7 +173,7 @@ where
         };
         self.client
             .get(
-                request,
+                Some(request),
                 "/api/v3/ticker/24hr",
                 self.domain.as_str(),
                 RequestExtension::none_auth_api(weight),
@@ -190,7 +190,7 @@ where
         }
         self.client
             .get(
-                request,
+                Some(request),
                 "/api/v3/ticker/tradingDay",
                 self.domain.as_str(),
                 RequestExtension::none_auth_api(4),
@@ -212,7 +212,7 @@ where
         };
         self.client
             .get(
-                request,
+                Some(request),
                 "/api/v3/ticker/tradingDay",
                 self.domain.as_str(),
                 RequestExtension::none_auth_api(weight as u32),
@@ -229,7 +229,7 @@ where
         }
         self.client
             .get(
-                request,
+                Some(request),
                 "/api/v3/ticker/price",
                 self.domain.as_str(),
                 RequestExtension::none_auth_api(2),
@@ -246,7 +246,7 @@ where
         }
         self.client
             .get(
-                request,
+                Some(request),
                 "/api/v3/ticker/price",
                 self.domain.as_str(),
                 RequestExtension::none_auth_api(4),
@@ -263,7 +263,7 @@ where
         }
         self.client
             .get(
-                request,
+                Some(request),
                 "/api/v3/ticker/bookTicker",
                 self.domain.as_str(),
                 RequestExtension::none_auth_api(2),
@@ -280,7 +280,7 @@ where
         }
         self.client
             .get(
-                request,
+                Some(request),
                 "/api/v3/ticker/bookTicker",
                 self.domain.as_str(),
                 RequestExtension::none_auth_api(4),
@@ -297,7 +297,7 @@ where
         }
         self.client
             .get(
-                request,
+                Some(request),
                 "/api/v3/ticker",
                 self.domain.as_str(),
                 RequestExtension::none_auth_api(4),
@@ -319,7 +319,7 @@ where
         };
         self.client
             .get(
-                request,
+                Some(request),
                 "/api/v3/ticker",
                 self.domain.as_str(),
                 RequestExtension::none_auth_api(weight as u32),

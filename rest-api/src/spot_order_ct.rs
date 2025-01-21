@@ -39,7 +39,7 @@ where
     ) -> BinanceResult<CreateOrderResp> {
         self.client
             .post(
-                req,
+                Some(req),
                 "/api/v3/order",
                 self.domain.as_str(),
                 RequestExtension::auth_order_api(AuthType::UserData, 1, certificate, uid),
@@ -53,7 +53,7 @@ where
     ) -> BinanceResult<QueryOrderResp> {
         self.client
             .get(
-                req,
+                Some(req),
                 "/api/v3/order",
                 self.domain.as_str(),
                 RequestExtension::auth_api(AuthType::UserData, 4, certificate),
@@ -68,7 +68,7 @@ where
     ) -> BinanceResult<Vec<QueryOrderResp>> {
         self.client
             .get(
-                req,
+                Some(req),
                 "/api/v3/allOrders",
                 self.domain.as_str(),
                 RequestExtension::auth_api(AuthType::UserData, 20, certificate),
@@ -84,7 +84,7 @@ where
     ) -> BinanceResult<CancelOrderResp> {
         self.client
             .delete(
-                req,
+                Some(req),
                 "/api/v3/order",
                 self.domain.as_str(),
                 RequestExtension::auth_order_api(AuthType::UserData, 1, certificate, uid),
@@ -100,7 +100,7 @@ where
     ) -> BinanceResult<Vec<CancelOrderResp>> {
         self.client
             .delete(
-                req,
+                Some(req),
                 "/api/v3/openOrders",
                 self.domain.as_str(),
                 RequestExtension::auth_order_api(AuthType::UserData, 1, certificate, uid),
@@ -116,7 +116,7 @@ where
     ) -> BinanceResult<CreateOcoOrderResp> {
         self.client
             .post(
-                req,
+                Some(req),
                 "/api/v3/orderList/oco",
                 self.domain.as_str(),
                 RequestExtension::auth_order_api(AuthType::Trade, 1, certificate, uid),
@@ -132,7 +132,7 @@ where
     ) -> BinanceResult<CreateOtoOrderResp> {
         self.client
             .post(
-                req,
+                Some(req),
                 "/api/v3/orderList/oto",
                 self.domain.as_str(),
                 RequestExtension::auth_order_api(AuthType::Trade, 1, certificate, uid),
@@ -148,7 +148,7 @@ where
     ) -> BinanceResult<CreateOtoCoOrderResp> {
         self.client
             .post(
-                req,
+                Some(req),
                 "/api/v3/orderList/otoco",
                 self.domain.as_str(),
                 RequestExtension::auth_order_api(AuthType::Trade, 1, certificate, uid),
@@ -164,7 +164,7 @@ where
     ) -> BinanceResult<CancelOrderListResp> {
         self.client
             .delete(
-                req,
+                Some(req),
                 "/api/v3/orderList",
                 self.domain.as_str(),
                 RequestExtension::auth_order_api(AuthType::Trade, 1, certificate, uid),
@@ -179,7 +179,7 @@ where
     ) -> BinanceResult<QueryOrderListResp> {
         self.client
             .get(
-                req,
+                Some(req),
                 "/api/v3/orderList",
                 self.domain.as_str(),
                 RequestExtension::auth_api(AuthType::UserData, 4, certificate),
@@ -194,7 +194,7 @@ where
     ) -> BinanceResult<Vec<QueryOrderListResp>> {
         self.client
             .get_multiple(
-                req,
+                Some(req),
                 "/api/v3/allOrderList",
                 self.domain.as_str(),
                 RequestExtension::auth_api(AuthType::UserData, 20, certificate),
@@ -209,7 +209,7 @@ where
     ) -> BinanceResult<Vec<QueryOpenOrderResp>> {
         self.client
             .get_multiple(
-                req,
+                Some(req),
                 "/api/v3/openOrderList",
                 self.domain.as_str(),
                 RequestExtension::auth_api(AuthType::UserData, 6, certificate),
@@ -224,7 +224,7 @@ where
         uid: u64,
     ) -> BinanceResult<CreateSorOrderResp> {
         self.client.post(
-            req,
+            Some(req),
             "/api/v3/sor/order",
             self.domain.as_str(),
             RequestExtension::auth_order_api(AuthType::Trade, 1, certificate, uid),

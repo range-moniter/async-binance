@@ -2,7 +2,6 @@ use client::rest::client::BinanceClient;
 use client::rest::config::Config;
 use client::rest::rest_client::BinanceRestClient;
 use lazy_static::lazy_static;
-// use rest_api::usd_future_market_ct::UsdFutureMarketClient;
 //
 // lazy_static! {
 //     static ref CLIENT: UsdFutureMarketClient<BinanceRestClient> =

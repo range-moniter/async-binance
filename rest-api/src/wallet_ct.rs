@@ -30,7 +30,7 @@ where
     ) -> BinanceResult<Vec<GetWalletCoinsResp>> {
         self.client
             .get_multiple(
-                req,
+                Some(req),
                 "/sapi/v1/capital/config/getall",
                 self.domain.as_str(),
                 RequestExtension::auth_sapi(AuthType::UserData, 10, certificate),
@@ -47,7 +47,7 @@ where
     ) -> BinanceResult<CreateWithdrawResp> {
         self.client
             .post(
-                req,
+                Some(req),
                 "/sapi/v1/capital/withdraw/apply",
                 self.domain.as_str(),
                 RequestExtension::auth_uid_sapi(AuthType::UserData, 600, certificate, uid),
@@ -63,7 +63,7 @@ where
     ) -> BinanceResult<Vec<GetWithdrawHistoryResp>> {
         self.client
             .get_multiple(
-                req,
+                Some(req),
                 "/sapi/v1/capital/withdraw/history",
                 self.domain.as_str(),
                 RequestExtension::auth_sapi(AuthType::UserData, 18000, certificate),

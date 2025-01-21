@@ -5,10 +5,8 @@ use std::convert::Infallible;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use pin_project::pin_project;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(Debug, Serialize, Default)]
-pub struct EmptyRequestData;
 
 #[derive(Debug, Deserialize, Default)]
 pub struct EmptyResponseData{}

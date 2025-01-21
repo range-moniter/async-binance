@@ -1,4 +1,4 @@
-use client::rest::body::{EmptyRequestData, EmptyResponseData};
+use client::rest::body::EmptyResponseData;
 use client::rest::client::{BinanceClient, BinanceClientAction};
 use client::rest::extension::RequestExtension;
 use client::rest::layer::authorization::types::{AuthType, Certificate};
@@ -24,7 +24,7 @@ where
     async fn create_listen_key(&self, certificate: Certificate) -> BinanceResult<UserDataStream> {
         self.client
             .post(
-                EmptyRequestData::default(),
+                None::<String>,
                 "/api/v3/userDataStream",
                 self.domain.as_str(),
                 RequestExtension::auth_api(AuthType::UserStream, 1, certificate),
@@ -39,7 +39,7 @@ where
     ) -> BinanceResult<EmptyResponseData> {
         self.client
             .put(
-                listen_key,
+                Some(listen_key),
                 "/api/v3/userDataStream",
                 self.domain.as_str(),
                 RequestExtension::auth_api(AuthType::UserStream, 1, certificate),
@@ -54,7 +54,7 @@ where
     ) -> BinanceResult<EmptyResponseData> {
         self.client
             .delete(
-                listen_key,
+                Some(listen_key),
                 "/api/v3/userDataStream",
                 self.domain.as_str(),
                 RequestExtension::auth_api(AuthType::UserStream, 1, certificate),

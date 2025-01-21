@@ -8,8 +8,8 @@ use general::result::BinanceResult;
 use http_body::Body;
 use http_body_util::{BodyExt, Empty};
 use hyper::{Request, Response, Uri};
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 
 const HTTP_SCHEME: &str = "https";
 
@@ -19,11 +19,10 @@ pub trait BinanceClient {
 }
 
 #[async_trait]
-pub trait BinanceClientAction
-{
+pub trait BinanceClientAction {
     async fn get<I, O>(
         &self,
-        request: I,
+        request: Option<I>,
         path: &str,
         domain: &str,
         extension: Vec<RequestExtension>,
@@ -34,7 +33,7 @@ pub trait BinanceClientAction
 
     async fn get_multiple<I, O>(
         &self,
-        request: I,
+        request: Option<I>,
         path: &str,
         domain: &str,
         extension: Vec<RequestExtension>,
@@ -45,7 +44,7 @@ pub trait BinanceClientAction
 
     async fn post<I, O>(
         &self,
-        request: I,
+        request: Option<I>,
         path: &str,
         domain: &str,
         extension: Vec<RequestExtension>,
@@ -56,7 +55,7 @@ pub trait BinanceClientAction
 
     async fn put<I, O>(
         &self,
-        request: I,
+        request: Option<I>,
         path: &str,
         domain: &str,
         extension: Vec<RequestExtension>,
@@ -67,7 +66,7 @@ pub trait BinanceClientAction
 
     async fn delete<I, O>(
         &self,
-        request: I,
+        request: Option<I>,
         path: &str,
         domain: &str,
         extension: Vec<RequestExtension>,
@@ -77,7 +76,7 @@ pub trait BinanceClientAction
         O: DeserializeOwned + Send;
 
     fn build_get_request<I>(
-        request: I,
+        request: Option<I>,
         path: &str,
         domain: &str,
         mut extension: Vec<RequestExtension>,
@@ -85,10 +84,12 @@ pub trait BinanceClientAction
     where
         I: Serialize,
     {
-        let params = serde_urlencoded::to_string(&request)
-            .unwrap_or_else(|err| panic!("serialize error: {}", err));
         let uri = Self::build_uri(path, domain);
-        extension.push(RequestExtension::Param(params));
+        if request.is_some() {
+            let params = serde_urlencoded::to_string(&request)
+                .unwrap_or_else(|err| panic!("serialize error: {}", err));
+            extension.push(RequestExtension::Param(params));
+        }
         Request::get(uri)
             .extension(extension)
             .body(RequestBody::Empty(Empty::<Bytes>::new()))
@@ -96,25 +97,7 @@ pub trait BinanceClientAction
     }
 
     fn build_delete_request<I>(
-        request: I,
-        path: &str,
-        domain: &str,
-        mut extension: Vec<RequestExtension>,
-    ) -> Request<RequestBody> where
-        I: Serialize,
-    {
-        let uri = Self::build_uri(path, domain);
-        extension.push(RequestExtension::Body(
-            serde_urlencoded::to_string(request).unwrap_or_else(|err| panic!("serialize error: {}", err)),
-        ));
-        Request::delete(uri)
-            .extension(extension)
-            .body(RequestBody::Empty(Empty::<Bytes>::new()))
-            .unwrap()
-    }
-
-    fn build_post_request<I>(
-        request: I,
+        request: Option<I>,
         path: &str,
         domain: &str,
         mut extension: Vec<RequestExtension>,
@@ -123,9 +106,35 @@ pub trait BinanceClientAction
         I: Serialize,
     {
         let uri = Self::build_uri(path, domain);
-        extension.push(RequestExtension::Body(
-            serde_urlencoded::to_string(request).unwrap_or_else(|err| panic!("serialize error: {}", err)),
-        ));
+        Self::add_body_extension(request, &mut extension);
+        Request::delete(uri)
+            .extension(extension)
+            .body(RequestBody::Empty(Empty::<Bytes>::new()))
+            .unwrap()
+    }
+
+    fn add_body_extension<I>(request: Option<I>, extension: &mut Vec<RequestExtension>)
+    where
+        I: Serialize,
+    {
+        if request.is_some() {
+            let params = serde_urlencoded::to_string(request)
+                .unwrap_or_else(|err| panic!("serialize error: {}", err));
+            extension.push(RequestExtension::Body(params));
+        }
+    }
+
+    fn build_post_request<I>(
+        request: Option<I>,
+        path: &str,
+        domain: &str,
+        mut extension: Vec<RequestExtension>,
+    ) -> Request<RequestBody>
+    where
+        I: Serialize,
+    {
+        let uri = Self::build_uri(path, domain);
+        Self::add_body_extension(request, &mut extension);
         Request::post(uri)
             .extension(extension)
             .body(RequestBody::Empty(Empty::<Bytes>::new()))
@@ -133,7 +142,7 @@ pub trait BinanceClientAction
     }
 
     fn build_put_request<I>(
-        request: I,
+        request: Option<I>,
         path: &str,
         domain: &str,
         mut extension: Vec<RequestExtension>,
@@ -142,9 +151,7 @@ pub trait BinanceClientAction
         I: Serialize,
     {
         let uri = Self::build_uri(path, domain);
-        extension.push(RequestExtension::Body(
-            serde_urlencoded::to_string(request).unwrap_or_else(|err| panic!("serialize error: {}", err)),
-        ));
+        Self::add_body_extension(request, &mut extension);
         Request::put(uri)
             .extension(extension)
             .body(RequestBody::Empty(Empty::<Bytes>::new()))
@@ -162,7 +169,7 @@ pub trait BinanceClientAction
 
     async fn deserialize_response_body<R, O>(mut resp: Response<R>) -> BinanceResult<O>
     where
-        R: Body<Data=Bytes> + Send + Unpin + 'static,
+        R: Body<Data = Bytes> + Send + Unpin + 'static,
         R::Error: std::error::Error + Send + Sync + 'static,
         O: DeserializeOwned,
     {

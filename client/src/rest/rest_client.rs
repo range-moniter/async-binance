@@ -40,7 +40,7 @@ impl BinanceClient for BinanceRestClient {
 }
 #[async_trait]
 impl BinanceClientAction for BinanceRestClient {
-    async fn get<I, O>(&self, request: I, path: &str, domain: &str, extension: Vec<RequestExtension>) -> BinanceResult<O>
+    async fn get<I, O>(&self, request: Option<I>, path: &str, domain: &str, extension: Vec<RequestExtension>) -> BinanceResult<O>
     where
         I: Serialize + Send + Sync ,
         O: DeserializeOwned + Send
@@ -50,7 +50,7 @@ impl BinanceClientAction for BinanceRestClient {
         Self::deserialize_response_body(resp).await
     }
 
-    async fn get_multiple<I, O>(&self, request: I, path: &str, domain: &str, extension: Vec<RequestExtension>) -> BinanceResult<Vec<O>>
+    async fn get_multiple<I, O>(&self, request: Option<I>, path: &str, domain: &str, extension: Vec<RequestExtension>) -> BinanceResult<Vec<O>>
     where
         I: Serialize + Send + Sync,
         O: DeserializeOwned + Send
@@ -60,7 +60,7 @@ impl BinanceClientAction for BinanceRestClient {
         Self::deserialize_response_body(resp).await
     }
 
-    async fn post<I, O>(&self, request: I, path: &str, domain: &str, extension: Vec<RequestExtension>) -> BinanceResult<O>
+    async fn post<I, O>(&self, request: Option<I>, path: &str, domain: &str, extension: Vec<RequestExtension>) -> BinanceResult<O>
     where
         I: Serialize + Send + Sync,
         O: DeserializeOwned + Send
@@ -70,7 +70,7 @@ impl BinanceClientAction for BinanceRestClient {
         Self::deserialize_response_body(resp).await
     }
 
-    async fn put<I, O>(&self, request: I, path: &str, domain: &str, extension: Vec<RequestExtension>) -> BinanceResult<O>
+    async fn put<I, O>(&self, request: Option<I>, path: &str, domain: &str, extension: Vec<RequestExtension>) -> BinanceResult<O>
     where
         I: Serialize + Send + Sync,
         O: DeserializeOwned + Send
@@ -80,7 +80,7 @@ impl BinanceClientAction for BinanceRestClient {
         Self::deserialize_response_body(resp).await
     }
 
-    async fn delete<I, O>(&self, request: I, path: &str, domain: &str, extension: Vec<RequestExtension>) -> BinanceResult<O>
+    async fn delete<I, O>(&self, request: Option<I>, path: &str, domain: &str, extension: Vec<RequestExtension>) -> BinanceResult<O>
     where
         I: Serialize + Send + Sync,
         O: DeserializeOwned + Send
