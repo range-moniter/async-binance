@@ -20,8 +20,18 @@ pub enum WorkflowType {
 pub enum TimeInForce {
     GTC,
     IOC,
-    FOK
+    FOK,
 }
+
+#[derive(Debug, Copy, Clone, Deserialize, Serialize, Eq, PartialEq)]
+pub enum FutureTimeInForce {
+    GTC,
+    IOC,
+    FOK,
+    GTX,
+    GTD
+}
+
 #[derive(Debug, Copy, Clone, Deserialize, Serialize)]
 pub enum RateLimiterInterval {
     SECOND,

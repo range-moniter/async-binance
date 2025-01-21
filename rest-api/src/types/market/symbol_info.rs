@@ -1,7 +1,8 @@
-use serde::Deserialize;
-use general::enums::order::OrderType;
+use serde::{Deserialize, Serialize};
+use general::enums::general::{FutureTimeInForce, TimeInForce};
+use general::enums::order::{FutureOrderType, OrderType};
 use general::enums::permission::Permission;
-use general::enums::symbol_filter::SymbolFilter;
+use general::enums::symbol_filter::{FutureSymbolFilter, SymbolFilter};
 use general::enums::symbol_status::SymbolStatus;
 
 #[derive(Debug, Deserialize)]
@@ -51,3 +52,51 @@ pub struct SymbolInfo {
 }
 
 
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct FutureSymbol {
+    pub symbol: String,
+    pub pair: String,
+    #[serde(rename = "contractType")]
+    pub contract_type: String,
+    #[serde(rename = "deliveryDate")]
+    pub delivery_date: i64,
+    #[serde(rename = "onboardDate")]
+    pub onboard_date: i64,
+    pub status: String,
+    #[serde(rename = "maintMarginPercent")]
+    pub maint_margin_percent: String,
+    #[serde(rename = "requiredMarginPercent")]
+    pub required_margin_percent: String,
+    #[serde(rename = "baseAsset")]
+    pub base_asset: String,
+    #[serde(rename = "quoteAsset")]
+    pub quote_asset: String,
+    #[serde(rename = "marginAsset")]
+    pub margin_asset: String,
+    #[serde(rename = "pricePrecision")]
+    pub price_precision: i64,
+    #[serde(rename = "quantityPrecision")]
+    pub quantity_precision: i64,
+    #[serde(rename = "baseAssetPrecision")]
+    pub base_asset_precision: i64,
+    #[serde(rename = "quotePrecision")]
+    pub quote_precision: i64,
+    #[serde(rename = "underlyingType")]
+    pub underlying_type: String,
+    #[serde(rename = "underlyingSubType")]
+    pub underlying_sub_type: Vec<String>,
+    #[serde(rename = "settlePlan")]
+    pub settle_plan: Option<i64>,
+    #[serde(rename = "triggerProtect")]
+    pub trigger_protect: String,
+    pub filters: Vec<FutureSymbolFilter>,
+    #[serde(rename = "orderTypes")]
+    pub order_types: Vec<FutureOrderType>,
+    #[serde(rename = "timeInForce")]
+    pub time_in_force: Vec<FutureTimeInForce>,
+    #[serde(rename = "liquidationFee")]
+    pub liquidation_fee: String,
+    #[serde(rename = "marketTakeBound")]
+    pub market_take_bound: String,
+}

@@ -4,3 +4,5 @@ pub mod trade_list;
 pub mod kline;
 pub mod price;
 pub mod symbol_info;
+pub mod future_exchange;
+pub mod asset;

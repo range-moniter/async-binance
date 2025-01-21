@@ -47,6 +47,23 @@ pub enum OrderType {
     #[serde(rename="LIMIT_MAKER")]
     LimitMaker
 }
+#[derive(Debug, Copy, Clone, Deserialize, Serialize, Eq, PartialEq)]
+pub enum FutureOrderType {
+    #[serde(rename="LIMIT")]
+    Limit,
+    #[serde(rename="MARKET")]
+    Market,
+    #[serde(rename="STOP")]
+    Stop,
+    #[serde(rename="STOP_MARKET")]
+    StopMarket,
+    #[serde(rename="TAKE_PROFIT")]
+    TakeProfit,
+    #[serde(rename="TAKE_PROFIT_MARKET")]
+    TakeProfitMarket,
+    #[serde(rename="TRAILING_STOP_MARKET")]
+    TrailingStopMarket,
+}
 
 #[derive(Debug, Copy, Clone, Deserialize, Serialize)]
 pub enum OrderResponseType {
