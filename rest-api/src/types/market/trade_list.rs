@@ -77,7 +77,7 @@ pub struct TradeListResp {
     pub time: u64,
     #[serde(rename = "isBuyerMaker")]
     pub is_buyer_maker: bool,
-    #[serde(rename = "isBestMatch")]
+    #[serde(rename = "isBestMatch", default)]
     pub is_best_match: bool,
 }
 
@@ -97,6 +97,6 @@ pub struct AggTradeListResp {
     pub trade_time: u64,
     #[serde(rename = "m")]
     pub is_buyer: bool,
-    #[serde(rename = "M")]
+    #[serde(rename = "M", default)]
     pub addition: bool,
 }

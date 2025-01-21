@@ -31,6 +31,10 @@ impl CommonReq {
 pub struct OrderBookResp {
     #[serde(rename = "lastUpdateId")]
     pub last_update_id: u64,
+    #[serde(rename = "E")]
+    pub output_time: Option<u64>,
+    #[serde(rename = "T")]
+    pub transaction_time: Option<u64>,
     #[serde(rename = "bids")]
     pub bids: Vec<Vec<String>>,
     #[serde(rename = "asks")]
