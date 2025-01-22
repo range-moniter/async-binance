@@ -16,6 +16,22 @@ use websocket::market::types::symbol_mini_ticker::TotalSymbolMiniTickerStream;
 use websocket::market::types::symbol_ticker::TotalSymbolTickerStream;
 use websocket::usd_future_market_socket_ct::BinanceUsdFutureMarketWebsocketClient;
 
+
+#[tokio::test]
+async fn usd_future_test_trade() {
+    Builder::from_default_env()
+        .filter(None, log::LevelFilter::Info)
+        .init();
+    let mut client =
+        BinanceUsdFutureMarketWebsocketClient::trade(DefaultStreamPayloadProcess::new()).await;
+    client.subscribe_item(Symbol::new("BANUSDT")).await;
+    client.subscribe_item(Symbol::new("BBUSDT")).await;
+    sleep(Duration::from_millis(10000)).await;
+    client.close().await;
+    sleep(Duration::from_millis(2000)).await;
+    print!("over");
+}
+
 #[tokio::test]
 async fn usd_future_test_agg_trade() {
     Builder::from_default_env()
@@ -71,9 +87,9 @@ async fn usd_future_test_kline_candle() {
     let mut client =
         BinanceUsdFutureMarketWebsocketClient::kline(DefaultStreamPayloadProcess::new()).await;
     client
-        .subscribe_item((Symbol::new("BTCUSDT"), Interval::Minute1, None))
+        .subscribe_item((Symbol::new("BANUSDT"), Interval::Minute1, None))
         .await;
-    sleep(Duration::from_secs(100)).await;
+    sleep(Duration::from_secs(10000)).await;
     client.close().await;
     sleep(Duration::from_millis(5000)).await;
     print!("over");

@@ -38,6 +38,14 @@ const USD_FUTURE_SOCKET_URI: &str = "wss://fstream.binance.com/ws";
 pub struct BinanceUsdFutureMarketWebsocketClient;
 
 impl BinanceUsdFutureMarketWebsocketClient {
+
+    pub async fn trade<P>(process: P) -> AggTradeClient
+    where
+        P: SocketPayloadProcess<AggTradeStreamPayload> + Send + 'static,
+    {
+        AggTradeClient::create_client(process, USD_FUTURE_SOCKET_URI).await
+    }
+
     pub async fn agg_trade<P>(process: P) -> AggTradeClient
     where
         P: SocketPayloadProcess<AggTradeStreamPayload> + Send + 'static,
