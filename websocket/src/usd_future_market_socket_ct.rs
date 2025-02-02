@@ -32,6 +32,8 @@ use crate::market::types::symbol_rolling::SymbolRollingPayload;
 use crate::market::types::symbol_ticker::{SymbolTickerPayload, TotalSymbolTickerPayload};
 use client::stream::adaptor::BinanceWebsocketAdaptor;
 use client::stream::stream::SocketPayloadProcess;
+use crate::market::trade_ct::TradeClient;
+use crate::market::types::trade::TradeStreamPayload;
 
 const USD_FUTURE_SOCKET_URI: &str = "wss://fstream.binance.com/ws";
 
@@ -39,11 +41,11 @@ pub struct BinanceUsdFutureMarketWebsocketClient;
 
 impl BinanceUsdFutureMarketWebsocketClient {
 
-    pub async fn trade<P>(process: P) -> AggTradeClient
+    pub async fn trade<P>(process: P) -> TradeClient
     where
-        P: SocketPayloadProcess<AggTradeStreamPayload> + Send + 'static,
+        P: SocketPayloadProcess<TradeStreamPayload> + Send + 'static,
     {
-        AggTradeClient::create_client(process, USD_FUTURE_SOCKET_URI).await
+        TradeClient::create_client(process, USD_FUTURE_SOCKET_URI).await
     }
 
     pub async fn agg_trade<P>(process: P) -> AggTradeClient

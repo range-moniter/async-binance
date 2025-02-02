@@ -26,7 +26,7 @@ async fn usd_future_test_trade() {
         BinanceUsdFutureMarketWebsocketClient::trade(DefaultStreamPayloadProcess::new()).await;
     client.subscribe_item(Symbol::new("BANUSDT")).await;
     client.subscribe_item(Symbol::new("BBUSDT")).await;
-    sleep(Duration::from_millis(10000)).await;
+    sleep(Duration::from_millis(8000)).await;
     client.close().await;
     sleep(Duration::from_millis(2000)).await;
     print!("over");
