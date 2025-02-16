@@ -68,5 +68,5 @@ pub struct LiquidationOrderItem {
     #[serde(rename = "z")]
     pub filled_accumulated_quantity: BigDecimal,
     #[serde(rename = "T")]
-    pub trade_time: u128
+    pub trade_time: u64
 }

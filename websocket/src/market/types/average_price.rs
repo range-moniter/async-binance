@@ -39,5 +39,5 @@ pub struct AveragePricePayload {
     #[serde(rename = "w")]
     pub average_price: BigDecimal,
     #[serde(rename = "T")]
-    pub last_trade_time: u128
+    pub last_trade_time: u64
 }

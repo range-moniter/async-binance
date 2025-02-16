@@ -41,7 +41,7 @@ pub struct TradeStreamPayload {
     #[serde(rename = "q")]
     pub quantity: BigDecimal,
     #[serde(rename = "T")]
-    pub trade_time: u128,
+    pub trade_time: u64,
     #[serde(rename = "m")]
     pub is_buyer_maker: bool,
     #[serde(rename = "M", default)]

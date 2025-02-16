@@ -78,7 +78,7 @@ pub struct KlineBody {
     #[serde(rename = "v")]
     pub asset_volume: BigDecimal,
     #[serde(rename = "n")]
-    pub trade_time: u128,
+    pub trade_time: u64,
     #[serde(rename = "x")]
     pub is_kline_close: bool,
     #[serde(rename = "q")]
