@@ -94,7 +94,7 @@ pub struct AggTradeListResp {
     #[serde(rename = "l")]
     pub last_trade_id: u64,
     #[serde(rename = "T")]
-    pub trade_time: u64,
+    pub trade_time: u128,
     #[serde(rename = "m")]
     pub is_buyer: bool,
     #[serde(rename = "M", default)]
