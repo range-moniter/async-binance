@@ -189,6 +189,7 @@ async fn run_socket_sender<I>(
                 } else {
                     None
                 };
+                log::info!("send socket message: {:?}", message);
                 message
             } => operator_message,
             pong_message = async {
@@ -197,7 +198,6 @@ async fn run_socket_sender<I>(
                 Some(msg)
             } => pong_message,
         };
-        log::info!("send socket message: {:?}", message);
         match message {
             None => {}
             Some(item) => {
