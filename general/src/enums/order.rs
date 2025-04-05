@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize, Eq, PartialEq, Hash)]
 pub enum OrderStatus {
     NEW,
     #[serde(rename="PENDING_NEW")]
@@ -16,7 +16,7 @@ pub enum OrderStatus {
     #[serde(rename="EXPIRED_IN_MATCH")]
     ExpiredMatch
 }
-#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize, Eq, PartialEq, Hash)]
 pub enum OrderListStatus {
     RESPONSE,
     #[serde(rename="EXEC_STARTED")]
@@ -25,14 +25,14 @@ pub enum OrderListStatus {
     AllDone
 }
 
-#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize, Eq, PartialEq, Hash)]
 pub enum OrderListOrderStatus {
     EXECUTING,
     #[serde(rename="ALL_DONE")]
     AllDone,
     REJECT
 }
-#[derive(Debug, Copy, Clone, Deserialize, Serialize, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize, Eq, PartialEq, Hash)]
 pub enum OrderType {
     LIMIT,
     MARKET,
@@ -47,7 +47,7 @@ pub enum OrderType {
     #[serde(rename="LIMIT_MAKER")]
     LimitMaker
 }
-#[derive(Debug, Copy, Clone, Deserialize, Serialize, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize, Eq, PartialEq, Hash)]
 pub enum FutureOrderType {
     #[serde(rename="LIMIT")]
     Limit,
@@ -65,14 +65,14 @@ pub enum FutureOrderType {
     TrailingStopMarket,
 }
 
-#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize, Eq, PartialEq, Hash)]
 pub enum OrderResponseType {
     ACK,
     RESULT,
     FULL
 }
 
-#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize, Eq, PartialEq, Hash)]
 pub enum OrderSide {
     BUY,
     SELL,

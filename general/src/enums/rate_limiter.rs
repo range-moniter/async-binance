@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 
 
-#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize, Eq, PartialEq, Hash)]
 pub enum RateLimitUnit {
     SECOND,
     MINUTE,
@@ -10,7 +10,7 @@ pub enum RateLimitUnit {
     DAY,
 }
 
-#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize, Eq, PartialEq, Hash)]
 pub enum RateLimitType {
     #[serde(rename = "REQUEST_WEIGHT")]
     RequestWeight,
@@ -20,7 +20,7 @@ pub enum RateLimitType {
 }
 
 
-#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize, Eq, PartialEq, Hash)]
 pub struct RateLimiter {
     #[serde(rename = "rateLimitType")]
     pub rate_limit_type: RateLimitType,
