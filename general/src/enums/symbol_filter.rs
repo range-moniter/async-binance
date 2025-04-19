@@ -188,4 +188,9 @@ pub enum FutureSymbolFilter {
         multiplier_decimal: String,
 
     },
+    #[serde(rename = "POSITION_RISK_CONTROL")]
+    PositionRiskControl {
+        #[serde(rename = "positionControlSide")]
+        position_control_side: String,
+    }
 }
