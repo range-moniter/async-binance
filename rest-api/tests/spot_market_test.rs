@@ -15,7 +15,7 @@ lazy_static! {
 #[tokio::test]
 async fn spot_market_exchange_info() {
     let mut req = ExchangeReq::new();
-    req.set_symbol("BNBUSDT");
+    // req.set_symbol("BNBUSDT");
     let resp = CLIENT.get_exchange(req).await;
     if let Ok(resp) = resp {
         println!("{:#?}", resp);
